@@ -20,6 +20,54 @@ public static class Shema
         );
         CREATE INDEX IX_Promjene_Vrijeme ON Promjene (Vrijeme);
         """,
+
+        // 2 – sekcije i članovi (polja s * su šifrirana)
+        """
+        CREATE TABLE Sekcije (
+            Id TEXT NOT NULL PRIMARY KEY,
+            Naziv TEXT NOT NULL,
+            Skrivena INTEGER NOT NULL DEFAULT 0,
+            Kreirano TEXT NOT NULL,
+            Azurirano TEXT NOT NULL,
+            Obrisano INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE Clanovi (
+            Id TEXT NOT NULL PRIMARY KEY,
+            Ime TEXT NOT NULL,
+            Prezime TEXT NOT NULL,
+            Nadimak TEXT NULL,
+            SekcijaId TEXT NULL REFERENCES Sekcije (Id),
+            VrstaClanstvaId TEXT NULL,
+            ClanOd TEXT NULL,
+            Status INTEGER NOT NULL DEFAULT 0,      -- 0 aktivan, 1 izašao
+            DatumIzlaska TEXT NULL,
+            RazlogIzlaska TEXT NULL,
+            Ulica TEXT NULL,                        -- *
+            KucniBroj TEXT NULL,                    -- *
+            PostanskiBroj TEXT NULL,
+            Mjesto TEXT NULL,
+            MobilniTelefon TEXT NULL,               -- *
+            FiksniTelefon TEXT NULL,                -- *
+            Email TEXT NULL,                        -- *
+            Oib TEXT NULL,                          -- *
+            DatumRodjenja TEXT NULL,                -- *
+            MjestoRodjenja TEXT NULL,               -- *
+            BrojIskaznice TEXT NULL,                -- *
+            IskaznicaVrijediDo TEXT NULL,
+            IspitDatum TEXT NULL,
+            IspitMjesto TEXT NULL,
+            BrojDiplome TEXT NULL,                  -- *
+            IzdavacDiplome TEXT NULL,
+            Odlikovanja TEXT NULL,
+            Skolovanja TEXT NULL,
+            Napomena TEXT NULL,                     -- *
+            Foto TEXT NULL,                         -- ime šifrirane datoteke u mapi foto
+            Kreirano TEXT NOT NULL,
+            Azurirano TEXT NOT NULL,
+            Obrisano INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE INDEX IX_Clanovi_Prezime ON Clanovi (Prezime, Ime);
+        """,
     ];
 
     public static int TrenutnaVerzija => Koraci.Length;

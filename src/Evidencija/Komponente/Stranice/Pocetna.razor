@@ -1,6 +1,52 @@
 @page "/"
+@inject ClanoviServis Clanovi
 
 <h1 class="h3 mb-3">🏠 Početna</h1>
-<div class="alert alert-secondary">
-    Program je otključan. Članovi, Članarina, Bodovi i Imenik dolaze u sljedećim koracima.
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <a class="card text-decoration-none h-100" href="clanovi"><div class="card-body">
+            <div class="text-muted small">Aktivnih članova</div>
+            <div class="kartica-broj">@_aktivnih</div>
+        </div></a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <a class="card text-decoration-none h-100" href="imenik"><div class="card-body">
+            <div class="text-muted small">Imenik</div>
+            <div class="kartica-broj">📒</div>
+        </div></a>
+    </div>
 </div>
+
+@if (_iskaznice.Count > 0)
+{
+    <div class="card border-warning mb-3"><div class="card-body">
+        <h2 class="h6">🪪 Lovačke iskaznice – istekle ili ističu u 30 dana</h2>
+        <ul class="list-unstyled mb-0">
+            @foreach (var c in _iskaznice)
+            {
+                <li class="py-1"><a href="clanovi/@c.Id">@c.PrezimeIme</a> <IskaznicaOznaka Clan="c" /></li>
+            }
+        </ul>
+    </div></div>
+}
+
+@if (_aktivnih == 0)
+{
+    <div class="alert alert-secondary">Za početak dodajte članove u <a href="clanovi">👥 Članovi</a>.
+        Ako udruga ima sekcije, prvo ih upišite u <a href="postavke/sekcije">🏷️ Sekcije</a>.</div>
+}
+
+@code {
+    private int _aktivnih;
+    private List<Clan> _iskaznice = [];
+
+    protected override void OnInitialized()
+    {
+        var danas = DateOnly.FromDateTime(DateTime.Today);
+        var aktivni = Clanovi.Svi().Where(c => c.Status == Clan.Aktivan).ToList();
+        _aktivnih = aktivni.Count;
+        _iskaznice = aktivni.Where(c => c.IskaznicaIsticeZaDana(danas) <= 30)
+            .OrderBy(c => c.IskaznicaIsticeZaDana(danas)).ToList();
+    }
+}

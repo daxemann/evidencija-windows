@@ -1,0 +1,49 @@
+@* Isti izbor svugdje: traži ime/nadimak · sekcija (samo ako postoje) · po želji status *@
+@inject SekcijeServis Sekcije
+
+<div class="d-flex flex-wrap gap-2 mb-3 no-print">
+    <input type="search" class="form-control" style="max-width:300px" placeholder="🔎 Traži ime ili nadimak"
+           value="@Upit" @oninput="e => Promijeni(() => Upit = e.Value?.ToString())" autofocus />
+    @if (_sekcije.Count > 0)
+    {
+        <select class="form-select" style="width:auto" value="@SekcijaId" @onchange="e => Promijeni(() => SekcijaId = e.Value?.ToString())">
+            <option value="">Sve sekcije</option>
+            @foreach (var s in _sekcije)
+            {
+                <option value="@s.Id">@s.Naziv</option>
+            }
+        </select>
+    }
+    @if (PrikaziStatus)
+    {
+        <select class="form-select" style="width:auto" value="@StatusTekst" @onchange="e => Promijeni(() => StatusTekst = e.Value?.ToString() ?? string.Empty)">
+            <option value="0">Aktivni članovi</option>
+            <option value="1">Izašli članovi</option>
+            <option value="">Svi</option>
+        </select>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Upit { get; set; }
+    [Parameter] public string? SekcijaId { get; set; }
+    [Parameter] public int? Status { get; set; } = Clan.Aktivan;
+    [Parameter] public bool PrikaziStatus { get; set; }
+    [Parameter] public EventCallback<(string? Upit, string? SekcijaId, int? Status)> Promjena { get; set; }
+
+    private List<Sekcija> _sekcije = [];
+
+    private string StatusTekst
+    {
+        get => Status?.ToString() ?? "";
+        set => Status = int.TryParse(value, out var s) ? s : null;
+    }
+
+    protected override void OnInitialized() => _sekcije = Sekcije.Sve(iSkrivene: true);
+
+    private Task Promijeni(Action postavi)
+    {
+        postavi();
+        return Promjena.InvokeAsync((Upit, SekcijaId, Status));
+    }
+}

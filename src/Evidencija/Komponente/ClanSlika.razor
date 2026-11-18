@@ -1,0 +1,21 @@
+@inject FotoServis Fotografije
+
+@if (_url != null)
+{
+    <img src="@_url" class="@(Velika ? "foto-velika" : "foto-mala")" alt="" />
+}
+else
+{
+    <span class="inicijali @(Velika ? "inicijali-velika" : "")">@Clan.Inicijali</span>
+}
+
+@code {
+    [Parameter, EditorRequired] public Clan Clan { get; set; } = null!;
+    [Parameter] public bool Velika { get; set; }
+    /// <summary>Za još nespremljenu sliku u obrascu.</summary>
+    [Parameter] public string? Foto { get; set; }
+
+    private string? _url;
+
+    protected override void OnParametersSet() => _url = Fotografije.DataUrl(Foto ?? Clan.Foto);
+}

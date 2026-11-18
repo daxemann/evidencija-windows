@@ -32,6 +32,9 @@ public partial class App : Application
         usluge.AddSingleton(baza);
         usluge.AddSingleton(new Kljucevi(mape.Kljucevi));
         usluge.AddSingleton<Sjednica>();
+        usluge.AddSingleton<ClanoviServis>();
+        usluge.AddSingleton<SekcijeServis>();
+        usluge.AddSingleton<FotoServis>();
         Usluge = usluge.BuildServiceProvider();
 
         base.OnStartup(e);

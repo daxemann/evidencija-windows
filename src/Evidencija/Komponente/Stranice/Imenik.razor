@@ -1,0 +1,49 @@
+@page "/imenik"
+@inject ClanoviServis Servis
+@inject SekcijeServis Sekcije
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-auto">📒 Imenik</h1>
+    <IspisGumb />
+</div>
+
+<ClanFilter Upit="@_upit" SekcijaId="@_sekcijaId" Promjena="Filtriraj" />
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+        <thead><tr><th>Prezime i ime</th><th>Nadimak</th><th>Mobitel</th><th>Fiksni</th><th>Mjesto</th>@if (_sekcije.Count > 0){<th>Sekcija</th>}</tr></thead>
+        <tbody>
+            @foreach (var c in _prikaz)
+            {
+                <tr>
+                    <td><b>@c.PrezimeIme</b></td>
+                    <td>@c.Nadimak</td>
+                    <td class="text-nowrap">@c.MobilniTelefon</td>
+                    <td class="text-nowrap">@c.FiksniTelefon</td>
+                    <td>@c.Mjesto</td>
+                    @if (_sekcije.Count > 0){<td>@(c.SekcijaId != null && _sekcije.TryGetValue(c.SekcijaId, out var n) ? n : "")</td>}
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<p class="small text-muted">@_prikaz.Count aktivnih članova</p>
+
+@code {
+    private List<Clan> _svi = [], _prikaz = [];
+    private Dictionary<string, string> _sekcije = [];
+    private string? _upit, _sekcijaId;
+
+    protected override void OnInitialized()
+    {
+        _svi = Servis.Svi();
+        _sekcije = Sekcije.Sve(true).ToDictionary(s => s.Id, s => s.Naziv);
+        Filtriraj((null, null, Clan.Aktivan));
+    }
+
+    private void Filtriraj((string? Upit, string? SekcijaId, int? Status) f)
+    {
+        (_upit, _sekcijaId, _) = f;
+        _prikaz = ClanoviServis.Filtriraj(_svi, _upit, _sekcijaId, Clan.Aktivan).ToList();
+    }
+}

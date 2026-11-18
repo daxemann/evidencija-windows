@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -9,7 +9,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Evidencija</RootNamespace>
     <AssemblyName>Evidencija</AssemblyName>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Product>Lovačka Evidencija za Windows</Product>
     <!-- Jedan program bez dodatne instalacije .NET-a -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>

@@ -1,0 +1,22 @@
+@* Upozorenje za lovačku iskaznicu: istekla / ističe za ≤ 30 dana *@
+@if (_dana is int d)
+{
+    if (d < 0)
+    {
+        <span class="badge text-bg-danger">istekla</span>
+    }
+    else if (d <= 30)
+    {
+        <span class="badge text-bg-warning">ističe za @d d.</span>
+    }
+    else
+    {
+        <span class="small text-muted">do @Evidencija.Pomoc.Tekst.Datum(Clan.IskaznicaVrijediDo)</span>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public Clan Clan { get; set; } = null!;
+    private int? _dana;
+    protected override void OnParametersSet() => _dana = Clan.IskaznicaIsticeZaDana(DateOnly.FromDateTime(DateTime.Today));
+}

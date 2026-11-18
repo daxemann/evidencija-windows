@@ -1,0 +1,13 @@
+@* Datum kao tekst yyyy-MM-dd (isto kao u bazi), prazno = null *@
+<input type="date" class="form-control" value="@Value" @onchange="Promjena" />
+
+@code {
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    private Task Promjena(ChangeEventArgs e)
+    {
+        var s = e.Value?.ToString();
+        return ValueChanged.InvokeAsync(string.IsNullOrWhiteSpace(s) ? null : s);
+    }
+}

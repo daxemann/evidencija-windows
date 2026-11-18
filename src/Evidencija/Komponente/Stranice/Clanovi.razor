@@ -1,0 +1,69 @@
+@page "/clanovi"
+@inject ClanoviServis Servis
+@inject SekcijeServis Sekcije
+@using Evidencija.Pomoc
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-auto">👥 Članovi</h1>
+    <IspisGumb />
+    <a class="btn btn-primary no-print" href="clanovi/novi">➕ Novi član</a>
+</div>
+
+<ClanFilter Upit="@_upit" SekcijaId="@_sekcijaId" Status="@_status" PrikaziStatus="true" Promjena="Filtriraj" />
+
+@if (_svi.Count == 0)
+{
+    <div class="alert alert-secondary">Još nema članova. Dodajte prvog gumbom <b>➕ Novi član</b>.</div>
+}
+else
+{
+    <p class="small text-muted">Prikazano: @_prikaz.Count od @_svi.Count</p>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr><th></th><th>Prezime i ime</th>@if (_imaSekcija){<th>Sekcija</th>}<th>Mobitel</th><th>Mjesto</th><th>Iskaznica</th></tr></thead>
+            <tbody>
+                @foreach (var c in _prikaz)
+                {
+                    <tr class="klikabilno" @onclick='() => Nav.NavigateTo("clanovi/" + c.Id)'>
+                        <td style="width:52px"><ClanSlika Clan="c" /></td>
+                        <td>
+                            <b>@c.PrezimeIme</b>
+                            @if (!string.IsNullOrEmpty(c.Nadimak)) {<span class="text-muted"> „@c.Nadimak“</span>}
+                            @if (c.Status == Clan.Izasao) {<span class="badge text-bg-secondary ms-1">izašao</span>}
+                        </td>
+                        @if (_imaSekcija){<td>@NazivSekcije(c.SekcijaId)</td>}
+                        <td>@c.MobilniTelefon</td>
+                        <td>@c.Mjesto</td>
+                        <td><IskaznicaOznaka Clan="c" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Inject] private NavigationManager Nav { get; set; } = null!;
+
+    private List<Clan> _svi = [], _prikaz = [];
+    private Dictionary<string, string> _sekcije = [];
+    private bool _imaSekcija;
+    private string? _upit, _sekcijaId;
+    private int? _status = Clan.Aktivan;
+
+    protected override void OnInitialized()
+    {
+        _svi = Servis.Svi();
+        _sekcije = Sekcije.Sve(true).ToDictionary(s => s.Id, s => s.Naziv);
+        _imaSekcija = _sekcije.Count > 0;
+        Filtriraj((null, null, Clan.Aktivan));
+    }
+
+    private void Filtriraj((string? Upit, string? SekcijaId, int? Status) f)
+    {
+        (_upit, _sekcijaId, _status) = f;
+        _prikaz = ClanoviServis.Filtriraj(_svi, _upit, _sekcijaId, _status).ToList();
+    }
+
+    private string NazivSekcije(string? id) => id != null && _sekcije.TryGetValue(id, out var n) ? n : "";
+}

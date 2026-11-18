@@ -1,0 +1,228 @@
+@page "/clanovi/novi"
+@page "/clanovi/{Id}"
+@inject ClanoviServis Servis
+@inject SekcijeServis Sekcije
+@inject FotoServis Fotografije
+@inject NavigationManager Nav
+@implements IDisposable
+@using Evidencija.Pomoc
+
+@if (_clan == null)
+{
+    <div class="alert alert-warning">Član nije pronađen. <a href="clanovi">← Članovi</a></div>
+    return;
+}
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-auto">@(_novi ? "➕ Novi član" : _clan.PrezimeIme)</h1>
+    <a class="btn btn-outline-secondary" href="clanovi">← Članovi</a>
+</div>
+
+<form @onsubmit="Spremi" @onsubmit:preventDefault>
+<div class="row g-3">
+    <div class="col-lg-3 text-center">
+        <ClanSlika Clan="_clan" Foto="@_novaFoto" Velika="true" />
+        <div class="mt-2">
+            <label class="btn btn-sm btn-outline-secondary">
+                📷 @(string.IsNullOrEmpty(_novaFoto ?? _clan.Foto) ? "Dodaj fotografiju" : "Promijeni fotografiju")
+                <InputFile class="d-none" accept="image/*" OnChange="NovaFotografija" />
+            </label>
+            @if (!string.IsNullOrEmpty(_novaFoto ?? _clan.Foto))
+            {
+                <button type="button" class="btn btn-sm btn-link text-danger" @onclick="UkloniFotografiju">Ukloni</button>
+            }
+        </div>
+        <Poruka Tekst="@_greskaFoto" />
+    </div>
+
+    <div class="col-lg-9">
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h6 text-muted">Osnovno</h2>
+            <div class="row g-2">
+                <div class="col-md-4"><label class="form-label">Ime *</label><input class="form-control" @bind="_clan.Ime" /></div>
+                <div class="col-md-4"><label class="form-label">Prezime *</label><input class="form-control" @bind="_clan.Prezime" /></div>
+                <div class="col-md-4"><label class="form-label">Nadimak</label><input class="form-control" @bind="_clan.Nadimak" /></div>
+                @if (_sekcije.Count > 0)
+                {
+                    <div class="col-md-4"><label class="form-label">Sekcija</label>
+                        <select class="form-select" @bind="_clan.SekcijaId">
+                            <option value="">—</option>
+                            @foreach (var s in _sekcije.Where(s => !s.Skrivena || s.Id == _clan.SekcijaId))
+                            {
+                                <option value="@s.Id">@s.Naziv</option>
+                            }
+                        </select></div>
+                }
+                <div class="col-md-4"><label class="form-label">Član od</label><DatumPolje @bind-Value="_clan.ClanOd" /></div>
+                <div class="col-md-4"><label class="form-label">Status</label>
+                    <select class="form-select" @bind="_clan.Status">
+                        <option value="0">Aktivan</option>
+                        <option value="1">Izašao iz udruge</option>
+                    </select></div>
+                @if (_clan.Status == Clan.Izasao)
+                {
+                    <div class="col-md-4"><label class="form-label">Datum izlaska</label><DatumPolje @bind-Value="_clan.DatumIzlaska" /></div>
+                    <div class="col-md-8"><label class="form-label">Razlog izlaska</label><input class="form-control" @bind="_clan.RazlogIzlaska" /></div>
+                }
+            </div>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h6 text-muted">Kontakt <span class="fw-normal small">🔒 šifrirano</span></h2>
+            <div class="row g-2">
+                <div class="col-md-5"><label class="form-label">Ulica</label><input class="form-control" @bind="_clan.Ulica" /></div>
+                <div class="col-md-2"><label class="form-label">Kućni broj</label><input class="form-control" @bind="_clan.KucniBroj" /></div>
+                <div class="col-md-2"><label class="form-label">Poštanski br.</label><input class="form-control" @bind="_clan.PostanskiBroj" /></div>
+                <div class="col-md-3"><label class="form-label">Mjesto</label><input class="form-control" @bind="_clan.Mjesto" /></div>
+                <div class="col-md-4"><label class="form-label">Mobitel</label><input type="tel" class="form-control" @bind="_clan.MobilniTelefon" /></div>
+                <div class="col-md-4"><label class="form-label">Fiksni telefon</label><input type="tel" class="form-control" @bind="_clan.FiksniTelefon" /></div>
+                <div class="col-md-4"><label class="form-label">E-pošta</label><input type="email" class="form-control" @bind="_clan.Email" /></div>
+            </div>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h6 text-muted">Osobno <span class="fw-normal small">🔒 šifrirano</span></h2>
+            <div class="row g-2">
+                <div class="col-md-4"><label class="form-label">OIB</label><input class="form-control" maxlength="11" @bind="_clan.Oib" /></div>
+                <div class="col-md-4"><label class="form-label">Datum rođenja</label><DatumPolje @bind-Value="_clan.DatumRodjenja" /></div>
+                <div class="col-md-4"><label class="form-label">Mjesto rođenja</label><input class="form-control" @bind="_clan.MjestoRodjenja" /></div>
+            </div>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h6 text-muted">Lovačko</h2>
+            <div class="row g-2">
+                <div class="col-md-4"><label class="form-label">Broj lovačke iskaznice 🔒</label><input class="form-control" @bind="_clan.BrojIskaznice" /></div>
+                <div class="col-md-4"><label class="form-label">Iskaznica vrijedi do</label><DatumPolje @bind-Value="_clan.IskaznicaVrijediDo" /></div>
+                <div class="col-md-4 d-flex align-items-end pb-2"><IskaznicaOznaka Clan="_clan" /></div>
+                <div class="col-md-4"><label class="form-label">Lovački ispit – datum</label><DatumPolje @bind-Value="_clan.IspitDatum" /></div>
+                <div class="col-md-8"><label class="form-label">Lovački ispit – mjesto</label><input class="form-control" @bind="_clan.IspitMjesto" /></div>
+                <div class="col-md-4"><label class="form-label">Broj diplome 🔒</label><input class="form-control" @bind="_clan.BrojDiplome" /></div>
+                <div class="col-md-8"><label class="form-label">Izdavač diplome</label><input class="form-control" @bind="_clan.IzdavacDiplome" /></div>
+            </div>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h6 text-muted">Ostalo</h2>
+            <div class="row g-2">
+                <div class="col-md-6"><label class="form-label">Odlikovanja</label><textarea class="form-control" rows="2" @bind="_clan.Odlikovanja"></textarea></div>
+                <div class="col-md-6"><label class="form-label">Školovanja</label><textarea class="form-control" rows="2" @bind="_clan.Skolovanja"></textarea></div>
+                <div class="col-12"><label class="form-label">Napomena 🔒</label><textarea class="form-control" rows="3" @bind="_clan.Napomena"></textarea></div>
+            </div>
+        </div></div>
+
+        <Poruka Tekst="@_greska" />
+        <Poruka Tekst="@_upozorenje" Vrsta="warning" />
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-primary">💾 @(_upozorenje != null ? "Ipak spremi" : "Spremi")</button>
+            <a class="btn btn-outline-secondary" href="clanovi">Odustani</a>
+            @if (!_novi)
+            {
+                @if (_potvrdaBrisanja)
+                {
+                    <span class="ms-auto align-self-center small">Stvarno obrisati člana sa svim podacima?</span>
+                    <button type="button" class="btn btn-danger" @onclick="Obrisi">Da, obriši</button>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="() => _potvrdaBrisanja = false">Ne</button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-outline-danger ms-auto" @onclick="() => _potvrdaBrisanja = true">🗑️ Obriši</button>
+                }
+            }
+        </div>
+        <p class="small text-muted mt-2">Tko je izašao iz udruge, bolje ga je označiti statusom „Izašao“ nego obrisati – podaci o članarini i bodovima ostaju.</p>
+    </div>
+</div>
+</form>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+
+    private Clan? _clan;
+    private bool _novi, _potvrdaBrisanja, _spremljeno;
+    private string? _novaFoto, _greska, _upozorenje, _greskaFoto;
+    private List<Sekcija> _sekcije = [];
+
+    protected override void OnParametersSet()
+    {
+        _novi = string.IsNullOrEmpty(Id);
+        _clan = _novi ? new Clan { ClanOd = DateTime.Today.ToString("yyyy-MM-dd") } : Servis.Dohvati(Id!)?.Kopija();
+        _sekcije = Sekcije.Sve(iSkrivene: true);
+    }
+
+    private async Task NovaFotografija(InputFileChangeEventArgs e)
+    {
+        _greskaFoto = null;
+        try
+        {
+            using var tok = e.File.OpenReadStream(FotoServis.NajvecaDatoteka);
+            using var mem = new MemoryStream();
+            await tok.CopyToAsync(mem);
+            OdbaciNovuFoto();
+            _novaFoto = Fotografije.Spremi(mem.ToArray());
+        }
+        catch (IOException) { _greskaFoto = "Slika je prevelika (najviše 15 MB)."; }
+        catch (InvalidDataException ex) { _greskaFoto = ex.Message; }
+    }
+
+    private void UkloniFotografiju()
+    {
+        OdbaciNovuFoto();
+        _clan!.Foto = null;
+    }
+
+    private void Spremi()
+    {
+        var c = _clan!;
+        _greska = string.IsNullOrWhiteSpace(c.Ime) || string.IsNullOrWhiteSpace(c.Prezime) ? "Upišite ime i prezime." : null;
+        if (_greska != null) return;
+
+        // upozorenja se prikažu jednom; drugi klik sprema
+        if (_upozorenje == null && Upozorenja(c) is { } u)
+        {
+            _upozorenje = u;
+            return;
+        }
+
+        var staraFoto = _novi ? null : Servis.Dohvati(c.Id)?.Foto;
+        if (_novaFoto != null) c.Foto = _novaFoto;
+        if (c.Status == Clan.Aktivan) { c.DatumIzlaska = null; c.RazlogIzlaska = null; }
+        Servis.Spremi(c);
+        if (staraFoto != null && staraFoto != c.Foto) Fotografije.Obrisi(staraFoto);
+        _spremljeno = true;
+        Nav.NavigateTo("clanovi");
+    }
+
+    private string? Upozorenja(Clan c)
+    {
+        var poruke = new List<string>();
+        if (!string.IsNullOrWhiteSpace(c.Oib) && !Tekst.OibIspravan(c.Oib.Trim()))
+            poruke.Add("OIB nije ispravan (11 znamenki s kontrolnom znamenkom).");
+        var isti = Servis.Svi().Where(x => x.Id != c.Id).FirstOrDefault(x =>
+            (Tekst.Normaliziraj(x.PrezimeIme) == Tekst.Normaliziraj($"{c.Prezime} {c.Ime}")) ||
+            (!string.IsNullOrWhiteSpace(c.Oib) && x.Oib == c.Oib.Trim()));
+        if (isti != null) poruke.Add($"Već postoji član „{isti.PrezimeIme}“ s istim imenom ili OIB-om.");
+        return poruke.Count > 0 ? string.Join(" ", poruke) : null;
+    }
+
+    private void Obrisi()
+    {
+        Fotografije.Obrisi(_clan!.Foto ?? Servis.Dohvati(_clan.Id)?.Foto);
+        OdbaciNovuFoto();
+        Servis.Obrisi(_clan.Id);
+        _spremljeno = true;
+        Nav.NavigateTo("clanovi");
+    }
+
+    private void OdbaciNovuFoto()
+    {
+        Fotografije.Obrisi(_novaFoto);
+        _novaFoto = null;
+    }
+
+    /// <summary>Odustajanje: nespremljena nova slika ne smije ostati na disku.</summary>
+    public void Dispose()
+    {
+        if (!_spremljeno) OdbaciNovuFoto();
+    }
+}
