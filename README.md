@@ -11,6 +11,9 @@ U izradi (0.1.0): okvir, prijava, šifriranje. Moduli slijede.
 - Osjetljiva polja šifrirana (AES-256-GCM, PBKDF2-SHA256 – samo ugrađeni .NET alati).
 - Podaci u `%LOCALAPPDATA%\LovackaEvidencija`, nikad u mapi programa.
 
+## Licenca
+AGPL-3.0 (vidi `LICENSE`). Bootstrap: MIT.
+
 ## Razvoj
 - .NET 10 SDK, Windows 10 (2004) ili noviji
 - `dotnet build EvidencijaWindows.sln` · `dotnet test EvidencijaWindows.sln`
