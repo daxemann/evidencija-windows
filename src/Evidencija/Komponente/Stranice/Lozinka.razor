@@ -1,0 +1,19 @@
+@page "/postavke/lozinka"
+@inject Sjednica Sjednica
+
+<h1 class="h3 mb-3">🔑 Lozinka</h1>
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card"><div class="card-body">
+            <h2 class="h6">Promijeni lozinku</h2>
+            <PromjenaLozinke Vrsta="@Kljucevi.Lozinka" />
+        </div></div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card"><div class="card-body">
+            <h2 class="h6">Promijeni rezervnu lozinku</h2>
+            <p class="small text-muted mb-2">✉️ Nakon promjene zapišite novu rezervnu lozinku i zamijenite papir u kuverti.</p>
+            <PromjenaLozinke Vrsta="@Kljucevi.Rezervna" />
+        </div></div>
+    </div>
+</div>

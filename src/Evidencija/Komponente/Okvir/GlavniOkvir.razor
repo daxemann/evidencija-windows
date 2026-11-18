@@ -1,0 +1,35 @@
+@inherits LayoutComponentBase
+@inject Sjednica Sjednica
+
+<div class="page">
+    <div class="sidebar">
+        <div class="top-row ps-3 navbar navbar-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="">🦌 Evidencija</a>
+            </div>
+        </div>
+        <div class="nav-scrollable">
+            <nav class="nav flex-column">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">🏠 Početna</NavLink>
+                <NavLink class="nav-link" href="postavke/lozinka">🔑 Lozinka</NavLink>
+            </nav>
+            <div class="program-potpis">
+                <img src="logo-evidencija.svg" alt="" width="22" height="22" />
+                <span>Evidencija za Windows · @Verzija</span>
+            </div>
+        </div>
+    </div>
+    <main>
+        <div class="top-row px-4">
+            <button type="button" class="btn btn-link p-0" @onclick="Sjednica.Zakljucaj">🔒 Zaključaj</button>
+        </div>
+        <article class="content px-4 pb-5">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    private static readonly string Verzija =
+        typeof(GlavniOkvir).Assembly.GetName().Version?.ToString(3) ?? "";
+}

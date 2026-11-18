@@ -1,0 +1,9 @@
+@if (!string.IsNullOrEmpty(Tekst))
+{
+    <div class="alert alert-@Vrsta py-2 small">@Tekst</div>
+}
+
+@code {
+    [Parameter] public string? Tekst { get; set; }
+    [Parameter] public string Vrsta { get; set; } = "danger";
+}

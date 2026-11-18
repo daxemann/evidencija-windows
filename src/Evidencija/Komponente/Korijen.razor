@@ -1,0 +1,29 @@
+@* Dok program nije otključan, vidi se samo prijava / prvo postavljanje – nijedna druga stranica. *@
+@implements IDisposable
+@inject Sjednica Sjednica
+
+@if (!Sjednica.Otkljucano)
+{
+    <Ulaz />
+}
+else
+{
+    <Router AppAssembly="typeof(Korijen).Assembly">
+        <Found Context="ruta">
+            <RouteView RouteData="ruta" DefaultLayout="typeof(GlavniOkvir)" />
+        </Found>
+        <NotFound>
+            <LayoutView Layout="typeof(GlavniOkvir)">
+                <p>Stranica nije pronađena.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+}
+
+@code {
+    protected override void OnInitialized() => Sjednica.Promjena += Osvjezi;
+
+    private void Osvjezi() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Sjednica.Promjena -= Osvjezi;
+}

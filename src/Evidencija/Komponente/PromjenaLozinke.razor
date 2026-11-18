@@ -1,0 +1,44 @@
+@* Promjena lozinke ili rezervne lozinke – uvijek uz trenutnu lozinku iste vrste *@
+@inject Sjednica Sjednica
+
+<form @onsubmit="Spremi" @onsubmit:preventDefault>
+    <input type="password" class="form-control mb-2" @bind="_stara" placeholder="Trenutna @Naziv" autocomplete="current-password" />
+    <input type="password" class="form-control mb-2" @bind="_nova" placeholder="Nova @Naziv (najmanje @Min znakova)" autocomplete="new-password" />
+    <input type="password" class="form-control mb-3" @bind="_nova2" placeholder="Ponovite novu" autocomplete="new-password" />
+    <Poruka Tekst="@_greska" />
+    <Poruka Tekst="@_uspjeh" Vrsta="success" />
+    <button class="btn btn-primary" disabled="@_radi">@(_radi ? "Pričekajte…" : "Spremi")</button>
+</form>
+
+@code {
+    [Parameter, EditorRequired] public string Vrsta { get; set; } = Kljucevi.Lozinka;
+
+    private string _stara = "", _nova = "", _nova2 = "";
+    private string? _greska, _uspjeh;
+    private bool _radi;
+
+    private string Naziv => Vrsta == Kljucevi.Rezervna ? "rezervna lozinka" : "lozinka";
+    private int Min => Vrsta == Kljucevi.Rezervna ? Kljucevi.MinRezervna : Kljucevi.MinLozinka;
+
+    private async Task Spremi()
+    {
+        _uspjeh = null;
+        _greska = Kljucevi.GreskaLozinke(Vrsta, _nova, _nova2);
+        if (_greska != null) return;
+        _radi = true;
+        var ok = await Task.Run(() =>
+        {
+            if (!Sjednica.ProvjeriLozinku(Vrsta, _stara)) return false;
+            Sjednica.PromijeniLozinku(Vrsta, _nova);
+            return true;
+        });
+        _radi = false;
+        if (!ok)
+        {
+            _greska = $"Trenutna {Naziv} nije točna.";
+            return;
+        }
+        _stara = _nova = _nova2 = "";
+        _uspjeh = "Spremljeno.";
+    }
+}

@@ -1,0 +1,11 @@
+bin/
+obj/
+.vs/
+*.user
+izlaz/
+# nikad podaci ni ključevi
+*.db
+*.db-wal
+*.db-shm
+kljucevi.json
+.claude/

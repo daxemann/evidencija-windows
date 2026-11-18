@@ -1,0 +1,9 @@
+/* Dodaci samo za Windows verziju (osnova: app.css iz online Evidencije) */
+#blazor-error-ui { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; }
+.sidebar .navbar-brand { color: #fff; font-weight: 600; font-size: 1.05rem; }
+.sidebar .nav-link { margin: 0 .5rem; padding: 0 .75rem; text-decoration: none; }
+.nav-scrollable { padding-top: .5rem; }
+.program-potpis { display: flex; align-items: center; gap: .5rem; color: #cfd9c4; font-size: .8rem; padding: 1rem; text-decoration: none; }
+.ulaz-okvir { max-width: 440px; margin: 8vh auto; }
+.ulaz-logo { font-size: 1.4rem; font-weight: 700; color: #2f5d23; }
+.upozorenje-kuverta { border-left: 4px solid #c99a2e; background: #fff8e6; }

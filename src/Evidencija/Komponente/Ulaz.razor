@@ -1,0 +1,122 @@
+@* Prvo postavljanje, prijava i „Zaboravili ste lozinku?“ *@
+@inject Sjednica Sjednica
+
+<div class="ulaz-okvir px-3">
+    <div class="text-center mb-4">
+        <img src="logo-evidencija.svg" alt="" width="56" height="56" />
+        <div class="ulaz-logo mt-2">Lovačka Evidencija</div>
+        <div class="text-muted small">za Windows · bez interneta</div>
+    </div>
+
+    @if (Sjednica.PrvoPokretanje)
+    {
+        <div class="card shadow-sm"><div class="card-body">
+            <h1 class="h5">Prvo pokretanje</h1>
+            <p class="small text-muted">Postavite dvije lozinke. Podaci članova spremaju se šifrirano i bez lozinke se ne mogu otvoriti.</p>
+            <form @onsubmit="Postavi" @onsubmit:preventDefault>
+                <label class="form-label fw-semibold">Lozinka <span class="fw-normal text-muted small">(za svaki dan, najmanje @Kljucevi.MinLozinka znakova)</span></label>
+                <input type="password" class="form-control mb-2" @bind="_lozinka" autocomplete="new-password" />
+                <input type="password" class="form-control mb-3" @bind="_lozinka2" placeholder="Ponovite lozinku" autocomplete="new-password" />
+
+                <label class="form-label fw-semibold">Rezervna lozinka <span class="fw-normal text-muted small">(najmanje @Kljucevi.MinRezervna znakova)</span></label>
+                <input type="password" class="form-control mb-2" @bind="_rezervna" autocomplete="new-password" />
+                <input type="password" class="form-control mb-3" @bind="_rezervna2" placeholder="Ponovite rezervnu lozinku" autocomplete="new-password" />
+
+                <div class="upozorenje-kuverta p-2 small mb-3">
+                    ✉️ <b>Rezervnu lozinku zapišite</b> i spremite na sigurno (npr. u kuverti kod predsjednika).
+                    Njome se postavlja nova lozinka ako zaboravite svoju. <b>Bez obje lozinke podaci se ne mogu vratiti.</b>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="zapisao" @bind="_zapisao" />
+                    <label class="form-check-label" for="zapisao">Zapisao/la sam rezervnu lozinku</label>
+                </div>
+                <Poruka Tekst="@_greska" />
+                <button class="btn btn-primary w-100" disabled="@(_radi || !_zapisao)">@(_radi ? "Pričekajte…" : "Spremi i otvori")</button>
+            </form>
+        </div></div>
+    }
+    else if (_zaboravljena)
+    {
+        <div class="card shadow-sm"><div class="card-body">
+            <h1 class="h5">Zaboravili ste lozinku?</h1>
+            <p class="small text-muted">Upišite rezervnu lozinku (iz kuverte) i postavite novu lozinku.</p>
+            <form @onsubmit="NovaLozinka" @onsubmit:preventDefault>
+                <input type="password" class="form-control mb-3" @bind="_rezervna" placeholder="Rezervna lozinka" autocomplete="off" />
+                <input type="password" class="form-control mb-2" @bind="_lozinka" placeholder="Nova lozinka" autocomplete="new-password" />
+                <input type="password" class="form-control mb-3" @bind="_lozinka2" placeholder="Ponovite novu lozinku" autocomplete="new-password" />
+                <Poruka Tekst="@_greska" />
+                <button class="btn btn-primary w-100" disabled="@_radi">@(_radi ? "Pričekajte…" : "Postavi novu lozinku")</button>
+            </form>
+            <button class="btn btn-link px-0 mt-2" @onclick="() => Prebaci(false)">← Natrag na prijavu</button>
+        </div></div>
+    }
+    else
+    {
+        <div class="card shadow-sm"><div class="card-body">
+            <form @onsubmit="Prijava" @onsubmit:preventDefault>
+                <label class="form-label fw-semibold">Lozinka</label>
+                <input type="password" class="form-control mb-3" @bind="_lozinka" autocomplete="current-password" autofocus />
+                <Poruka Tekst="@_greska" />
+                <button class="btn btn-primary w-100" disabled="@_radi">@(_radi ? "Pričekajte…" : "Otvori")</button>
+            </form>
+            <button class="btn btn-link px-0 mt-2" @onclick="() => Prebaci(true)">Zaboravili ste lozinku?</button>
+        </div></div>
+    }
+</div>
+
+@code {
+    private string _lozinka = "", _lozinka2 = "", _rezervna = "", _rezervna2 = "";
+    private bool _zapisao, _radi, _zaboravljena;
+    private string? _greska;
+
+    private async Task Postavi()
+    {
+        _greska = Kljucevi.GreskaLozinke(Kljucevi.Lozinka, _lozinka, _lozinka2)
+                  ?? Kljucevi.GreskaLozinke(Kljucevi.Rezervna, _rezervna, _rezervna2)
+                  ?? (_lozinka == _rezervna ? "Rezervna lozinka mora biti drukčija od lozinke." : null);
+        if (_greska != null) return;
+        await Radi(() => Sjednica.Postavi(_lozinka, _rezervna));
+    }
+
+    private async Task Prijava()
+    {
+        var ok = false;
+        await Radi(() => ok = Sjednica.Prijava(Kljucevi.Lozinka, _lozinka));
+        if (!ok) _greska = KrivaLozinka();
+    }
+
+    private async Task NovaLozinka()
+    {
+        _greska = Kljucevi.GreskaLozinke(Kljucevi.Lozinka, _lozinka, _lozinka2);
+        if (_greska != null) return;
+        var ok = false;
+        // prvo provjera rezervne, tek onda otključavanje i nova lozinka
+        await Radi(() =>
+        {
+            if (!Sjednica.Prijava(Kljucevi.Rezervna, _rezervna)) return;
+            Sjednica.PromijeniLozinku(Kljucevi.Lozinka, _lozinka);
+            ok = true;
+        });
+        if (!ok) _greska = KrivaLozinka("Rezervna lozinka nije točna.");
+    }
+
+    private string KrivaLozinka(string tekst = "Lozinka nije točna.") =>
+        Sjednica.CekajSekundi > 0 ? $"Previše pokušaja – pričekajte {Sjednica.CekajSekundi} s." : tekst;
+
+    /// <summary>PBKDF2 traje oko pola sekunde – izvan glavne niti da prozor ne zastane.</summary>
+    private async Task Radi(Action posao)
+    {
+        _radi = true;
+        _greska = null;
+        StateHasChanged();
+        try { await Task.Run(posao); }
+        finally { _radi = false; }
+    }
+
+    private void Prebaci(bool zaboravljena)
+    {
+        _zaboravljena = zaboravljena;
+        _greska = null;
+        _lozinka = _lozinka2 = _rezervna = _rezervna2 = "";
+    }
+}
