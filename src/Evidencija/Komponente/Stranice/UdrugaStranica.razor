@@ -1,0 +1,57 @@
+@page "/postavke/udruga"
+@inject UdrugaServis Servis
+@using Evidencija.Pomoc
+
+<h1 class="h3 mb-3">🏛️ Udruga i uplatnica</h1>
+
+<form @onsubmit="Spremi" @onsubmit:preventDefault style="max-width:820px">
+    <div class="card mb-3"><div class="card-body">
+        <h2 class="h6 text-muted">Udruga</h2>
+        <div class="row g-2">
+            <div class="col-12"><label class="form-label">Naziv udruge *</label><input class="form-control" @bind="_u.Naziv" /></div>
+            <div class="col-md-6"><label class="form-label">Adresa</label><input class="form-control" @bind="_u.Adresa" /></div>
+            <div class="col-md-6"><label class="form-label">Poštanski broj i mjesto</label><input class="form-control" @bind="_u.Mjesto" /></div>
+            <div class="col-md-6"><label class="form-label">OIB udruge</label><input class="form-control" maxlength="11" @bind="_u.Oib" /></div>
+        </div>
+    </div></div>
+
+    <div class="card mb-3"><div class="card-body">
+        <h2 class="h6 text-muted">Uplatnica (HUB-3A)</h2>
+        <div class="row g-2">
+            <div class="col-md-8"><label class="form-label">IBAN udruge</label><input class="form-control" style="font-family:monospace" @bind="_u.Iban" /></div>
+            <div class="col-md-4"><label class="form-label">Šifra namjene <span class="text-muted small">(nije obavezno)</span></label><input class="form-control" maxlength="4" @bind="_u.Sifra" /></div>
+            <div class="col-md-3"><label class="form-label">Model</label><input class="form-control" maxlength="4" @bind="_u.Model" /></div>
+            <div class="col-md-9"><label class="form-label">Poziv na broj</label><input class="form-control" @bind="_u.Poziv" /></div>
+            <div class="col-12"><label class="form-label">Opis plaćanja</label><input class="form-control" @bind="_u.Opis" /></div>
+        </div>
+        <p class="small text-muted mt-2 mb-0">
+            Zamjene: <code>{GODINA}</code> · <code>{BROJ}</code> (članski broj) · <code>{RATA}</code> · u opisu i <code>{RATA_OPIS}</code> („2. rata“).
+            Primjer poziva: <b>@UdrugaServis.Poziv(_u.Poziv, DateTime.Today.Year, 12, 1)</b>
+        </p>
+    </div></div>
+
+    @foreach (var g in _greske)
+    {
+        <Poruka Tekst="@g" />
+    }
+    <Poruka Tekst="@_uspjeh" Vrsta="success" />
+    <button class="btn btn-primary">💾 Spremi</button>
+</form>
+
+@code {
+    private Udruga _u = new();
+    private List<string> _greske = [];
+    private string? _uspjeh;
+
+    protected override void OnInitialized() => _u = Servis.Ucitaj();
+
+    private void Spremi()
+    {
+        _uspjeh = null;
+        _greske = UdrugaServis.Greske(_u);
+        if (_greske.Count > 0) return;
+        Servis.Spremi(_u);
+        _u = Servis.Ucitaj();
+        _uspjeh = "Spremljeno." + (UdrugaServis.UplatnicaSpremna(_u) ? "" : " Za uplatnice upišite IBAN udruge.");
+    }
+}

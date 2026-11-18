@@ -4,7 +4,7 @@ Program za Windows **bez interneta**: članovi, članarina, bodovi i imenik za l
 Besplatno. Samostalan projekt, odvojen od online aplikacije Lovačka Evidencija.
 
 ## Stanje
-U izradi (0.2.0): prijava i šifriranje, članovi, imenik, sekcije. Slijede članarina, bodovi, uvoz, kopije, instalacija.
+U izradi (0.3.0): prijava i šifriranje, članovi, imenik, sekcije, članarina s ratama i HUB-3 uplatnicama. Slijede bodovi, uvoz, kopije, instalacija.
 
 ## Sigurnost ukratko
 - Lozinka + rezervna lozinka; ključ podataka postoji samo u memoriji dok je program otključan.
@@ -12,7 +12,7 @@ U izradi (0.2.0): prijava i šifriranje, članovi, imenik, sekcije. Slijede čla
 - Podaci u `%LOCALAPPDATA%\LovackaEvidencija`, nikad u mapi programa.
 
 ## Licenca
-AGPL-3.0 (vidi `LICENSE`). Bootstrap: MIT.
+AGPL-3.0 (vidi `LICENSE`). Bootstrap: MIT · ZXing.Net: Apache-2.0 · QuestPDF: Community licenca (besplatno za neprofitne udruge i pojedince).
 
 ## Razvoj
 - .NET 10 SDK, Windows 10 (2004) ili noviji

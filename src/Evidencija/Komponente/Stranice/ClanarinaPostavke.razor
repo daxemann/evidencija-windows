@@ -1,0 +1,112 @@
+@page "/postavke/clanarina"
+@inject VrsteClanstvaServis Vrste
+@inject ClanarinaServis Servis
+@inject ClanoviServis Clanovi
+@using Evidencija.Pomoc
+
+<h1 class="h3 mb-3">💶 Postavke članarine</h1>
+
+<div class="row g-4">
+    <div class="col-xl-7">
+        <div class="card"><div class="card-body">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                <h2 class="h6 mb-0 me-auto">Iznosi za godinu</h2>
+                <GodinaBirac Godina="_godina" GodinaChanged="PromijeniGodinu" />
+            </div>
+            <table class="table align-middle">
+                <thead><tr><th>Vrsta članstva</th><th style="width:130px">Iznos €</th><th style="width:170px">Rok (1. rata)</th><th style="width:110px">Broj rata</th></tr></thead>
+                <tbody>
+                    @foreach (var r in _redovi)
+                    {
+                        <tr>
+                            <td>@r.Naziv</td>
+                            <td><input class="form-control form-control-sm text-end" @bind="r.Iznos" placeholder="—" /></td>
+                            <td><DatumPolje @bind-Value="r.Rok" /></td>
+                            <td><input type="number" min="1" max="12" class="form-control form-control-sm" @bind="r.BrojRata" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <p class="small text-muted">Prazan iznos = za tu vrstu vrijedi iznos „Bez vrste“. Iznos <b>0</b> = oslobođeni (ne zadužuju se).
+                Kod više rata: prva na rok, ostale svaka @ClanarinaServis.RazmakRataMjeseci mjeseca – kod člana se može promijeniti.</p>
+            <Poruka Tekst="@_greska" />
+            <Poruka Tekst="@_uspjeh" Vrsta="success" />
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-primary" @onclick="Spremi">💾 Spremi iznose</button>
+                <button class="btn btn-outline-secondary" @onclick="Kopiraj">📋 Preuzmi iz @(_godina - 1).</button>
+            </div>
+        </div></div>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="card"><div class="card-body">
+            <h2 class="h6">Vrste članstva</h2>
+            <p class="small text-muted">Npr. redovni, umirovljenik, mladi, počasni. Bez vrsta svi plaćaju isti iznos.</p>
+            <SifrarnikUredi Servis="Vrste" Placeholder="Nova vrsta članstva" BrojClanova="@(id => _broj.GetValueOrDefault(id))" Promjena="Ucitaj" />
+        </div></div>
+    </div>
+</div>
+
+@code {
+    private sealed class Red
+    {
+        public string VrstaId { get; init; } = "";
+        public string Naziv { get; init; } = "";
+        public string? Iznos { get; set; }
+        public string? Rok { get; set; }
+        public int BrojRata { get; set; } = 1;
+    }
+
+    private int _godina = DateTime.Today.Year;
+    private List<Red> _redovi = [];
+    private Dictionary<string, int> _broj = [];
+    private string? _greska, _uspjeh;
+
+    protected override void OnInitialized() => Ucitaj();
+
+    private void PromijeniGodinu(int g)
+    {
+        _godina = g;
+        Ucitaj();
+    }
+
+    private void Ucitaj()
+    {
+        _broj = Clanovi.Svi().Where(c => c.VrstaClanstvaId != null && c.Status == Clan.Aktivan)
+            .GroupBy(c => c.VrstaClanstvaId!).ToDictionary(g => g.Key, g => g.Count());
+        var iznosi = Servis.Iznosi(_godina).ToDictionary(i => i.VrstaClanstvaId);
+        _redovi = new[] { new Stavka { Id = "", Naziv = "Bez vrste (svi ostali)" } }.Concat(Vrste.Sve())
+            .Select(v => iznosi.TryGetValue(v.Id, out var i)
+                ? new Red { VrstaId = v.Id, Naziv = v.Naziv, Iznos = Novac.Unos(i.Iznos), Rok = i.Rok, BrojRata = i.BrojRata }
+                : new Red { VrstaId = v.Id, Naziv = v.Naziv, Rok = v.Id == "" ? $"{_godina}-03-31" : null })
+            .ToList();
+        _greska = _uspjeh = null;
+    }
+
+    private void Spremi()
+    {
+        _greska = _uspjeh = null;
+        // prvo provjera svih redova, tek onda spremanje (ništa napola)
+        foreach (var r in _redovi.Where(r => !string.IsNullOrWhiteSpace(r.Iznos)))
+        {
+            if (Novac.Procitaj(r.Iznos) is not { } iznos) { _greska = $"Iznos za „{r.Naziv}“ nije ispravan."; return; }
+            if (iznos > 0 && r.Rok == null) { _greska = $"Upišite rok za „{r.Naziv}“."; return; }
+        }
+        foreach (var r in _redovi)
+        {
+            if (string.IsNullOrWhiteSpace(r.Iznos)) Servis.ObrisiIznos(_godina, r.VrstaId);
+            else Servis.SpremiIznos(_godina, new ClanarinaIznos
+                { VrstaClanstvaId = r.VrstaId, Iznos = Novac.Procitaj(r.Iznos)!.Value, Rok = r.Rok, BrojRata = r.BrojRata });
+        }
+        Ucitaj();
+        _uspjeh = $"Iznosi za {_godina}. spremljeni.";
+    }
+
+    private void Kopiraj()
+    {
+        var n = Servis.KopirajIznose(_godina - 1, _godina);
+        Ucitaj();
+        if (n == 0) _greska = $"Za {_godina - 1}. nema upisanih iznosa.";
+        else _uspjeh = $"Preuzeto iz {_godina - 1}. – provjerite i po potrebi promijenite.";
+    }
+}

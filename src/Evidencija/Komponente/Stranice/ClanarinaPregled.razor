@@ -1,0 +1,149 @@
+@page "/clanarina"
+@inject ClanarinaServis Servis
+@inject ClanoviServis Clanovi
+@inject VrsteClanstvaServis Vrste
+@inject UdrugaServis Udruga
+@inject NavigationManager Nav
+@using Evidencija.Pomoc
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-auto">💶 Članarina</h1>
+    <GodinaBirac Godina="_godina" GodinaChanged="PromijeniGodinu" />
+    <IspisGumb />
+</div>
+
+@if (_iznosi.Count == 0)
+{
+    <div class="alert alert-warning">Za @(_godina). još nisu upisani iznosi. <a href="postavke/clanarina">💶 Postavke članarine</a></div>
+}
+else if (_nezaduzenih > 0)
+{
+    <div class="alert alert-info d-flex flex-wrap align-items-center gap-2 no-print">
+        <span class="me-auto"><b>@_nezaduzenih</b> aktivnih članova još nema zaduženje za @(_godina).</span>
+        <button class="btn btn-primary btn-sm" @onclick="ZaduziSve">Zaduži sve prema iznosima</button>
+    </div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body py-2"><div class="small text-muted">Zaduženo</div><div class="fs-5 fw-semibold">@Novac.Prikaz(_ukZaduzeno)</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body py-2"><div class="small text-muted">Uplaćeno</div><div class="fs-5 fw-semibold text-success">@Novac.Prikaz(_ukUplaceno)</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body py-2"><div class="small text-muted">Preostalo</div><div class="fs-5 fw-semibold">@Novac.Prikaz(_ukZaduzeno - _ukUplaceno)</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card"><div class="card-body py-2"><div class="small text-muted">Članova s dospjelim dugom</div><div class="fs-5 fw-semibold text-danger">@_dospjelih</div></div></div></div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 align-items-start">
+    <ClanFilter Upit="@_upit" SekcijaId="@_sekcijaId" Status="null" Promjena="Filtriraj" />
+    <select class="form-select no-print" style="width:auto" value="@_prikaz" @onchange="e => { _prikaz = e.Value?.ToString() ?? string.Empty; Primijeni(); }">
+        <option value="">Svi</option>
+        <option value="duguju">Samo dužnici</option>
+        <option value="dospjelo">Samo dospjelo</option>
+        <option value="placeno">Samo plaćeno</option>
+        <option value="nezaduzeni">Nisu zaduženi</option>
+    </select>
+    @if (UdrugaServis.UplatnicaSpremna(_udruga) && _redovi.Any(r => r.C?.Preostalo > 0))
+    {
+        <button class="btn btn-outline-primary no-print" @onclick="UplatnicePdf">🧾 Uplatnice (PDF) za prikazane</button>
+    }
+</div>
+<Poruka Tekst="@_poruka" Vrsta="info" />
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead><tr><th>Član</th>@if (_vrste.Count > 0){<th>Vrsta</th>}<th class="text-end">Zaduženo</th><th class="text-end">Uplaćeno</th><th class="text-end">Preostalo</th><th>Status</th></tr></thead>
+        <tbody>
+            @foreach (var r in _redovi)
+            {
+                <tr class="klikabilno" @onclick='() => Nav.NavigateTo($"clanarina/{r.Clan.Id}/{_godina}")'>
+                    <td><b>@r.Clan.PrezimeIme</b>@if (r.Clan.Status == Clan.Izasao){<span class="badge text-bg-secondary ms-1">izašao</span>}</td>
+                    @if (_vrste.Count > 0){<td>@(r.Clan.VrstaClanstvaId != null && _vrste.TryGetValue(r.Clan.VrstaClanstvaId, out var v) ? v : "")</td>}
+                    <td class="text-end">@(r.C == null ? "" : Novac.Prikaz(r.C.Iznos))</td>
+                    <td class="text-end">@(r.C == null ? "" : Novac.Prikaz(r.C.Uplaceno))</td>
+                    <td class="text-end fw-semibold">@(r.C == null ? "" : Novac.Prikaz(r.C.Preostalo))</td>
+                    <td><ClanarinaStatus Status="@(r.C?.Status ?? StatusClanarine.NemaZaduzenja)" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<p class="small text-muted">Prikazano: @_redovi.Count</p>
+
+@code {
+    private sealed record RedPregleda(Clan Clan, Clanarina? C);
+
+    private int _godina = DateTime.Today.Year;
+    private List<Clan> _svi = [];
+    private Dictionary<string, Clanarina> _clanarine = [];
+    private Dictionary<string, string> _vrste = [];
+    private List<ClanarinaIznos> _iznosi = [];
+    private List<RedPregleda> _redovi = [];
+    private Udruga _udruga = new();
+    private string? _upit, _sekcijaId, _poruka;
+    private string _prikaz = "";
+    private int _nezaduzenih, _dospjelih;
+    private long _ukZaduzeno, _ukUplaceno;
+
+    protected override void OnInitialized()
+    {
+        _vrste = Vrste.Nazivi();
+        _udruga = Udruga.Ucitaj();
+        Ucitaj();
+    }
+
+    private void PromijeniGodinu(int g)
+    {
+        _godina = g;
+        _poruka = null;
+        Ucitaj();
+    }
+
+    private void Ucitaj()
+    {
+        _svi = Clanovi.Svi();
+        _clanarine = Servis.ZaGodinu(_godina);
+        _iznosi = Servis.Iznosi(_godina);
+        _nezaduzenih = _svi.Count(c => c.Status == Clan.Aktivan && !_clanarine.ContainsKey(c.Id)
+                                       && ClanarinaServis.IznosZa(_iznosi, c.VrstaClanstvaId)?.Iznos > 0);
+        _ukZaduzeno = _clanarine.Values.Sum(c => c.Iznos);
+        _ukUplaceno = _clanarine.Values.Sum(c => c.Uplaceno);
+        _dospjelih = _clanarine.Values.Count(c => c.Status == StatusClanarine.Dospjelo);
+        Primijeni();
+    }
+
+    private void Filtriraj((string? Upit, string? SekcijaId, int? Status) f)
+    {
+        (_upit, _sekcijaId, _) = f;
+        Primijeni();
+    }
+
+    /// <summary>Aktivni članovi + izašli koji za tu godinu imaju zaduženje.</summary>
+    private void Primijeni()
+    {
+        _redovi = ClanoviServis.Filtriraj(_svi, _upit, _sekcijaId, null)
+            .Select(c => new RedPregleda(c, _clanarine.GetValueOrDefault(c.Id)))
+            .Where(r => r.Clan.Status == Clan.Aktivan || r.C != null)
+            .Where(r => _prikaz switch
+            {
+                "duguju" => r.C?.Preostalo > 0,
+                "dospjelo" => r.C?.Status == StatusClanarine.Dospjelo,
+                "placeno" => r.C?.Status == StatusClanarine.Placeno,
+                "nezaduzeni" => r.C == null,
+                _ => true,
+            })
+            .ToList();
+    }
+
+    private void ZaduziSve()
+    {
+        var n = Servis.ZaduziSve(_godina, _svi);
+        _poruka = $"Zaduženo članova: {n}.";
+        Ucitaj();
+    }
+
+    private void UplatnicePdf()
+    {
+        var uplatnice = _redovi.Where(r => r.C?.Preostalo > 0)
+            .SelectMany(r => Uplatnice.ZaClana(r.Clan, r.C!, _udruga)).ToList();
+        var put = PdfIzvoz.SpremiIOtvori(Uplatnice.Pdf(uplatnice), $"Uplatnice clanarina {_godina}.pdf");
+        _poruka = put == null ? null : $"Spremljeno: {put} ({uplatnice.Count} uplatnica).";
+    }
+}

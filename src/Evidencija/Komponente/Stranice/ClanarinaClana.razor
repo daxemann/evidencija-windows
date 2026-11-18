@@ -1,0 +1,310 @@
+@page "/clanarina/{ClanId}/{Godina:int}"
+@inject ClanarinaServis Servis
+@inject ClanoviServis Clanovi
+@inject UdrugaServis Udruga
+@inject NavigationManager Nav
+@using Evidencija.Pomoc
+
+@if (_clan == null)
+{
+    <div class="alert alert-warning">Član nije pronađen. <a href="clanarina">← Članarina</a></div>
+    return;
+}
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-auto">💶 @_clan.PrezimeIme</h1>
+    <GodinaBirac Godina="Godina" GodinaChanged='g => Nav.NavigateTo($"clanarina/{ClanId}/{g}")' />
+    <a class="btn btn-outline-secondary" href="clanovi/@ClanId">👤 Član</a>
+    <a class="btn btn-outline-secondary" href="clanarina">← Članarina</a>
+</div>
+<Poruka Tekst="@_poruka" Vrsta="info" />
+
+@if (_c == null)
+{
+    <div class="card mb-3" style="max-width:640px"><div class="card-body">
+        <h2 class="h6">Nije zadužen za @(Godina).</h2>
+        <div class="row g-2 align-items-end">
+            <div class="col-sm-4"><label class="form-label">Iznos €</label><input class="form-control text-end" @bind="_noviIznos" /></div>
+            <div class="col-sm-4"><label class="form-label">Rok (1. rata)</label><DatumPolje @bind-Value="_noviRok" /></div>
+            <div class="col-sm-2"><label class="form-label">Rata</label><input type="number" min="1" max="12" class="form-control" @bind="_noviBrojRata" /></div>
+            <div class="col-sm-2"><button class="btn btn-primary w-100" @onclick="Zaduzi">Zaduži</button></div>
+        </div>
+        <Poruka Tekst="@_greska" />
+    </div></div>
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-xl-6">
+            <div class="card mb-3"><div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <h2 class="h6 mb-0 me-auto">Zaduženje @(Godina).</h2>
+                    <ClanarinaStatus Status="_c.Status" />
+                </div>
+                <div class="row text-center mb-3">
+                    <div class="col"><div class="small text-muted">Zaduženo</div><div class="fw-semibold">@Novac.Prikaz(_c.Iznos)</div></div>
+                    <div class="col"><div class="small text-muted">Uplaćeno</div><div class="fw-semibold text-success">@Novac.Prikaz(_c.Uplaceno)</div></div>
+                    <div class="col"><div class="small text-muted">Preostalo</div><div class="fw-semibold">@Novac.Prikaz(_c.Preostalo)</div></div>
+                </div>
+
+                @if (!_uredi)
+                {
+                    @if (_c.Rate.Count > 0)
+                    {
+                        <table class="table table-sm align-middle">
+                            <thead><tr><th>Rata</th><th>Rok</th><th class="text-end">Iznos</th><th class="text-end">Plaćeno</th><th></th></tr></thead>
+                            <tbody>
+                                @foreach (var r in _c.Rate)
+                                {
+                                    <tr>
+                                        <td>@(r.RedniBroj).</td>
+                                        <td>@Tekst.Datum(r.Dospijece)</td>
+                                        <td class="text-end">@Novac.Prikaz(r.Iznos)</td>
+                                        <td class="text-end">@Novac.Prikaz(r.Placeno)</td>
+                                        <td>@OznakaRate(r.Status)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    @if (!string.IsNullOrEmpty(_c.Napomena)) {<p class="small"><b>Napomena:</b> @_c.Napomena</p>}
+                    <div class="d-flex flex-wrap gap-2 no-print">
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="PocniUredivanje">✏️ Promijeni iznos / rate</button>
+                        @if (UdrugaServis.UplatnicaSpremna(_udruga) && _c.Preostalo > 0)
+                        {
+                            <button class="btn btn-outline-primary btn-sm" @onclick="UplatnicaPdf">🧾 Uplatnica (PDF)</button>
+                        }
+                        else if (!UdrugaServis.UplatnicaSpremna(_udruga))
+                        {
+                            <a class="btn btn-link btn-sm" href="postavke/udruga">Za uplatnicu upišite IBAN udruge</a>
+                        }
+                        @if (_c.Uplate.Count == 0)
+                        {
+                            @if (_potvrdaBrisanja)
+                            {
+                                <button class="btn btn-danger btn-sm ms-auto" @onclick="ObrisiZaduzenje">Da, obriši zaduženje</button>
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="() => _potvrdaBrisanja = false">Ne</button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-outline-danger btn-sm ms-auto" @onclick="() => _potvrdaBrisanja = true">🗑️ Obriši zaduženje</button>
+                            }
+                        }
+                    </div>
+                }
+                else
+                {
+                    <label class="form-label">Rate (iznos i rok)</label>
+                    @foreach (var r in _rate)
+                    {
+                        <div class="d-flex gap-2 mb-2">
+                            <input class="form-control text-end" style="max-width:140px" @bind="r.Iznos" placeholder="€" />
+                            <div style="max-width:190px"><DatumPolje @bind-Value="r.Datum" /></div>
+                            <button class="btn btn-outline-danger btn-sm" @onclick="() => _rate.Remove(r)" title="Ukloni ratu">✕</button>
+                        </div>
+                    }
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="DodajRatu">➕ Rata</button>
+                        <span class="small text-muted align-self-center">ili podijeli</span>
+                        <input class="form-control form-control-sm text-end" style="width:110px" @bind="_ukupno" placeholder="ukupno €" />
+                        <span class="small align-self-center">na</span>
+                        <input type="number" min="1" max="12" class="form-control form-control-sm" style="width:70px" @bind="_podijeliN" />
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="Podijeli">rata</button>
+                    </div>
+                    <label class="form-label">Napomena</label>
+                    <input class="form-control mb-3" @bind="_napomena" placeholder="npr. dogovor o obročnoj otplati" />
+                    <Poruka Tekst="@_greska" />
+                    <button class="btn btn-primary btn-sm" @onclick="SpremiRate">💾 Spremi</button>
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="() => _uredi = false">Odustani</button>
+                }
+            </div></div>
+        </div>
+
+        <div class="col-xl-6">
+            <div class="card mb-3"><div class="card-body">
+                <h2 class="h6">Uplate</h2>
+                @if (_c.Uplate.Count > 0)
+                {
+                    <table class="table table-sm align-middle">
+                        <thead><tr><th>Datum</th><th class="text-end">Iznos</th><th>Način</th><th>Napomena</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var u in _c.Uplate)
+                            {
+                                <tr>
+                                    <td>@Tekst.Datum(u.Datum)</td>
+                                    <td class="text-end">@Novac.Prikaz(u.Iznos)</td>
+                                    <td>@u.Nacin</td>
+                                    <td class="small">@u.Napomena</td>
+                                    <td class="text-end no-print">
+                                        @if (_brisiUplatu == u.Id)
+                                        {
+                                            <button class="btn btn-danger btn-sm" @onclick="() => ObrisiUplatu(u.Id)">Obriši</button>
+                                            <button class="btn btn-link btn-sm" @onclick="() => _brisiUplatu = null">Ne</button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-outline-danger btn-sm" @onclick="() => _brisiUplatu = u.Id" title="Obriši uplatu">✕</button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="text-muted small">Još nema uplata.</p>
+                }
+                <form class="row g-2 align-items-end no-print" @onsubmit="DodajUplatu" @onsubmit:preventDefault>
+                    <div class="col-sm-4"><label class="form-label small">Datum</label><DatumPolje @bind-Value="_u.Datum" /></div>
+                    <div class="col-sm-3"><label class="form-label small">Iznos €</label><input class="form-control text-end" @bind="_uIznos" /></div>
+                    <div class="col-sm-3"><label class="form-label small">Način</label>
+                        <select class="form-select" @bind="_u.Nacin">
+                            <option value="@Uplata.NacinGotovina">gotovina</option>
+                            <option value="@Uplata.NacinRacun">račun</option>
+                        </select></div>
+                    <div class="col-sm-2"><button class="btn btn-primary w-100">➕</button></div>
+                    <div class="col-12"><input class="form-control form-control-sm" @bind="_u.Napomena" placeholder="Napomena (nije obavezno)" /></div>
+                </form>
+                <Poruka Tekst="@_greskaUplate" />
+            </div></div>
+        </div>
+    </div>
+}
+
+@if (_povijest.Count > 0)
+{
+    <h2 class="h6 mt-2">Sve godine</h2>
+    <table class="table table-sm" style="max-width:640px">
+        <thead><tr><th>Godina</th><th class="text-end">Zaduženo</th><th class="text-end">Uplaćeno</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var p in _povijest)
+            {
+                <tr class="klikabilno @(p.Godina == Godina ? "table-active" : "")" @onclick='() => Nav.NavigateTo($"clanarina/{ClanId}/{p.Godina}")'>
+                    <td>@(p.Godina).</td><td class="text-end">@Novac.Prikaz(p.Iznos)</td><td class="text-end">@Novac.Prikaz(p.Uplaceno)</td>
+                    <td><ClanarinaStatus Status="p.Status" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public string ClanId { get; set; } = "";
+    [Parameter] public int Godina { get; set; }
+
+    private sealed class RataUnos { public string? Iznos { get; set; } public string? Datum { get; set; } }
+
+    private Clan? _clan;
+    private Clanarina? _c;
+    private List<Clanarina> _povijest = [];
+    private Udruga _udruga = new();
+    private Uplata _u = new();
+    private List<RataUnos> _rate = [];
+    private string? _uIznos, _noviIznos, _noviRok, _ukupno, _napomena, _greska, _greskaUplate, _poruka, _brisiUplatu;
+    private int _noviBrojRata = 1, _podijeliN = 2;
+    private bool _uredi, _potvrdaBrisanja;
+
+    protected override void OnParametersSet()
+    {
+        _udruga = Udruga.Ucitaj();
+        _poruka = null;
+        Ucitaj();
+    }
+
+    private void Ucitaj()
+    {
+        _clan = Clanovi.Dohvati(ClanId);
+        if (_clan == null) return;
+        _c = Servis.Dohvati(ClanId, Godina);
+        _povijest = Servis.ZaClana(ClanId);
+        _uredi = _potvrdaBrisanja = false;
+        _greska = _greskaUplate = _brisiUplatu = null;
+        _u = new Uplata { Datum = DateTime.Today.ToString("yyyy-MM-dd") };
+        _uIznos = _c is { Preostalo: > 0 } ? Novac.Unos(_c.Preostalo) : null;
+        if (_c == null)
+        {
+            var iz = ClanarinaServis.IznosZa(Servis.Iznosi(Godina), _clan.VrstaClanstvaId);
+            _noviIznos = iz == null ? null : Novac.Unos(iz.Iznos);
+            _noviRok = iz?.Rok ?? $"{Godina}-03-31";
+            _noviBrojRata = iz?.BrojRata ?? 1;
+        }
+    }
+
+    private static MarkupString OznakaRate(StatusRate s) => new(s switch
+    {
+        StatusRate.Placeno => "<span class=\"badge text-bg-success\">plaćeno</span>",
+        StatusRate.Djelomicno => "<span class=\"badge text-bg-warning\">djelomično</span>",
+        StatusRate.Dospjelo => "<span class=\"badge text-bg-danger\">dospjelo</span>",
+        _ => "<span class=\"badge text-bg-light border\">nije još dospjelo</span>",
+    });
+
+    private void Zaduzi()
+    {
+        if (Novac.Procitaj(_noviIznos) is not { } iznos || iznos <= 0) { _greska = "Upišite iznos veći od 0."; return; }
+        if (_noviRok == null) { _greska = "Upišite rok."; return; }
+        Servis.Zaduzi(ClanId, Godina, iznos, ClanarinaServis.RasporedRata(iznos, _noviBrojRata, _noviRok));
+        Ucitaj();
+    }
+
+    private void PocniUredivanje()
+    {
+        _rate = _c!.Rate.Select(r => new RataUnos { Iznos = Novac.Unos(r.Iznos), Datum = r.Dospijece }).ToList();
+        if (_rate.Count == 0) _rate.Add(new RataUnos { Iznos = Novac.Unos(_c.Iznos), Datum = $"{Godina}-03-31" });
+        _ukupno = Novac.Unos(_c.Iznos);
+        _napomena = _c.Napomena;
+        _greska = null;
+        _uredi = true;
+    }
+
+    private void DodajRatu() => _rate.Add(new RataUnos { Datum = _rate.LastOrDefault()?.Datum });
+
+    private void Podijeli()
+    {
+        if (Novac.Procitaj(_ukupno) is not { } uk || uk <= 0) { _greska = "Upišite ukupan iznos."; return; }
+        var prvi = _rate.FirstOrDefault()?.Datum ?? $"{Godina}-03-31";
+        _rate = ClanarinaServis.RasporedRata(uk, _podijeliN, prvi)
+            .Select(r => new RataUnos { Iznos = Novac.Unos(r.Iznos), Datum = r.Datum }).ToList();
+        _greska = null;
+    }
+
+    private void SpremiRate()
+    {
+        var rate = new List<(long, string)>();
+        foreach (var r in _rate)
+        {
+            if (Novac.Procitaj(r.Iznos) is not { } iz || iz <= 0 || r.Datum == null) { _greska = "Svaka rata treba iznos veći od 0 i rok."; return; }
+            rate.Add((iz, r.Datum));
+        }
+        if (rate.Count == 0) { _greska = "Upišite barem jednu ratu."; return; }
+        Servis.Promijeni(_c!.Id, 0, rate, _napomena);
+        Ucitaj();
+    }
+
+    private void DodajUplatu()
+    {
+        if (Novac.Procitaj(_uIznos) is not { } iz || iz <= 0) { _greskaUplate = "Upišite iznos uplate."; return; }
+        if (string.IsNullOrEmpty(_u.Datum)) { _greskaUplate = "Upišite datum."; return; }
+        _u.Iznos = iz;
+        Servis.DodajUplatu(_c!.Id, _u);
+        Ucitaj();
+    }
+
+    private void ObrisiUplatu(string id)
+    {
+        Servis.ObrisiUplatu(id);
+        Ucitaj();
+    }
+
+    private void ObrisiZaduzenje()
+    {
+        Servis.ObrisiZaduzenje(_c!.Id);
+        Ucitaj();
+    }
+
+    private void UplatnicaPdf()
+    {
+        var put = PdfIzvoz.SpremiIOtvori(Uplatnice.Pdf(Uplatnice.ZaClana(_clan!, _c!, _udruga)), $"Uplatnica {_clan!.PrezimeIme} {Godina}.pdf");
+        _poruka = put == null ? null : $"Spremljeno: {put}";
+    }
+}

@@ -1,0 +1,11 @@
+@* ‹ 2026 › – izbor godine *@
+<div class="btn-group" role="group" aria-label="Godina">
+    <button type="button" class="btn btn-outline-secondary" @onclick="() => GodinaChanged.InvokeAsync(Godina - 1)">‹</button>
+    <span class="btn btn-outline-secondary disabled fw-semibold text-body" style="opacity:1">@Godina.</span>
+    <button type="button" class="btn btn-outline-secondary" @onclick="() => GodinaChanged.InvokeAsync(Godina + 1)">›</button>
+</div>
+
+@code {
+    [Parameter] public int Godina { get; set; }
+    [Parameter] public EventCallback<int> GodinaChanged { get; set; }
+}

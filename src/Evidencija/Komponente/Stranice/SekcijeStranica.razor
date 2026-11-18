@@ -5,87 +5,12 @@
 <h1 class="h3 mb-1">🏷️ Sekcije</h1>
 <p class="text-muted small mb-3">Samo podatak gdje tko pripada – za filtar u popisima i na ispisu. Bez sekcija se ništa od toga ne prikazuje.</p>
 
-<form class="d-flex gap-2 mb-3" style="max-width:480px" @onsubmit="Dodaj" @onsubmit:preventDefault>
-    <input class="form-control" placeholder="Naziv nove sekcije" @bind="_novi" />
-    <button class="btn btn-primary text-nowrap">➕ Dodaj</button>
-</form>
-<Poruka Tekst="@_greska" />
-
-@if (_sekcije.Count > 0)
-{
-    <table class="table align-middle" style="max-width:720px">
-        <thead><tr><th>Naziv</th><th>Članova</th><th></th></tr></thead>
-        <tbody>
-            @foreach (var s in _sekcije)
-            {
-                <tr class="@(s.Skrivena ? "text-muted" : "")">
-                    <td>
-                        @if (_uredi == s.Id)
-                        {
-                            <input class="form-control form-control-sm" @bind="_naziv" />
-                        }
-                        else
-                        {
-                            @s.Naziv
-                            @if (s.Skrivena) {<span class="badge text-bg-secondary ms-1">skrivena</span>}
-                        }
-                    </td>
-                    <td>@(_broj.GetValueOrDefault(s.Id))</td>
-                    <td class="text-end text-nowrap">
-                        @if (_uredi == s.Id)
-                        {
-                            <button class="btn btn-sm btn-primary" @onclick="() => Preimenuj(s)">Spremi</button>
-                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => _uredi = null">Odustani</button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => { _uredi = s.Id; _naziv = s.Naziv; _greska = null; }">✏️ Preimenuj</button>
-                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => Sakrij(s)">@(s.Skrivena ? "👁️ Prikaži" : "🙈 Sakrij")</button>
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-    <p class="small text-muted">Skrivena sekcija se ne nudi kod novih upisa; članovi koji je imaju zadržavaju je.</p>
-}
+<SifrarnikUredi Servis="Servis" Placeholder="Naziv nove sekcije" BrojClanova="@(id => _broj.GetValueOrDefault(id))" />
 
 @code {
-    private List<Sekcija> _sekcije = [];
     private Dictionary<string, int> _broj = [];
-    private string _novi = "", _naziv = "";
-    private string? _uredi, _greska;
 
-    protected override void OnInitialized() => Ucitaj();
-
-    private void Ucitaj()
-    {
-        _sekcije = Servis.Sve(iSkrivene: true);
+    protected override void OnInitialized() =>
         _broj = Clanovi.Svi().Where(c => c.SekcijaId != null && c.Status == Clan.Aktivan)
             .GroupBy(c => c.SekcijaId!).ToDictionary(g => g.Key, g => g.Count());
-    }
-
-    private void Dodaj()
-    {
-        _greska = Servis.Greska(_novi);
-        if (_greska != null) return;
-        Servis.Dodaj(_novi);
-        _novi = "";
-        Ucitaj();
-    }
-
-    private void Preimenuj(Sekcija s)
-    {
-        _greska = Servis.Greska(_naziv, s.Id);
-        if (_greska != null) return;
-        Servis.Preimenuj(s.Id, _naziv);
-        _uredi = null;
-        Ucitaj();
-    }
-
-    private void Sakrij(Sekcija s)
-    {
-        Servis.Sakrij(s.Id, !s.Skrivena);
-        Ucitaj();
-    }
 }

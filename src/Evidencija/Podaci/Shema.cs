@@ -68,6 +68,67 @@ public static class Shema
         );
         CREATE INDEX IX_Clanovi_Prezime ON Clanovi (Prezime, Ime);
         """,
+
+        // 3 – članarina (iznosi u centima). Nazivi kao u online Evidenciji: Clanarine, ClanarinaRate, Uplate.
+        """
+        ALTER TABLE Clanovi ADD COLUMN ClanskiBroj INTEGER NULL;
+        UPDATE Clanovi SET ClanskiBroj = (SELECT COUNT(*) FROM Clanovi c2 WHERE c2.Kreirano <= Clanovi.Kreirano);
+        CREATE TABLE VrsteClanstva (
+            Id TEXT NOT NULL PRIMARY KEY,
+            Naziv TEXT NOT NULL,
+            Skrivena INTEGER NOT NULL DEFAULT 0,
+            Kreirano TEXT NOT NULL,
+            Azurirano TEXT NOT NULL,
+            Obrisano INTEGER NOT NULL DEFAULT 0
+        );
+        -- iznos za godinu po vrsti članstva ('' = članovi bez vrste)
+        CREATE TABLE ClanarinaIznosi (
+            Id TEXT NOT NULL PRIMARY KEY,
+            Godina INTEGER NOT NULL,
+            VrstaClanstvaId TEXT NOT NULL DEFAULT '',
+            Iznos INTEGER NOT NULL,
+            Rok TEXT NULL,
+            BrojRata INTEGER NOT NULL DEFAULT 1,
+            Kreirano TEXT NOT NULL,
+            Azurirano TEXT NOT NULL,
+            Obrisano INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE UNIQUE INDEX UX_ClanarinaIznosi ON ClanarinaIznosi (Godina, VrstaClanstvaId) WHERE Obrisano = 0;
+        CREATE TABLE Clanarine (
+            Id TEXT NOT NULL PRIMARY KEY,
+            ClanId TEXT NOT NULL REFERENCES Clanovi (Id),
+            Godina INTEGER NOT NULL,
+            Iznos INTEGER NOT NULL,
+            Napomena TEXT NULL,
+            Kreirano TEXT NOT NULL,
+            Azurirano TEXT NOT NULL,
+            Obrisano INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE UNIQUE INDEX UX_Clanarine ON Clanarine (ClanId, Godina) WHERE Obrisano = 0;
+        CREATE TABLE ClanarinaRate (
+            Id TEXT NOT NULL PRIMARY KEY,
+            ClanarinaId TEXT NOT NULL REFERENCES Clanarine (Id),
+            RedniBroj INTEGER NOT NULL,
+            Iznos INTEGER NOT NULL,
+            Dospijece TEXT NOT NULL,
+            Kreirano TEXT NOT NULL,
+            Azurirano TEXT NOT NULL,
+            Obrisano INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE Uplate (
+            Id TEXT NOT NULL PRIMARY KEY,
+            ClanarinaId TEXT NOT NULL REFERENCES Clanarine (Id),
+            Datum TEXT NOT NULL,
+            Iznos INTEGER NOT NULL,
+            Nacin TEXT NOT NULL DEFAULT 'gotovina',  -- gotovina / račun
+            Napomena TEXT NULL,
+            Kreirano TEXT NOT NULL,
+            Azurirano TEXT NOT NULL,
+            Obrisano INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE INDEX IX_Uplate_Clanarina ON Uplate (ClanarinaId);
+        CREATE INDEX IX_Rate_Clanarina ON ClanarinaRate (ClanarinaId);
+        """,
     ];
 
     public static int TrenutnaVerzija => Koraci.Length;

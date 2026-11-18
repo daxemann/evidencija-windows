@@ -1,0 +1,12 @@
+@switch (Status)
+{
+    case StatusClanarine.Placeno: <span class="badge text-bg-success">plaćeno</span> break;
+    case StatusClanarine.Djelomicno: <span class="badge text-bg-warning">djelomično</span> break;
+    case StatusClanarine.Dospjelo: <span class="badge text-bg-danger">dospjelo</span> break;
+    case StatusClanarine.Otvoreno: <span class="badge text-bg-light border">otvoreno</span> break;
+    default: <span class="badge text-bg-secondary">nije zadužen</span> break;
+}
+
+@code {
+    [Parameter] public StatusClanarine Status { get; set; }
+}

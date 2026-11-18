@@ -31,7 +31,7 @@
     [Parameter] public bool PrikaziStatus { get; set; }
     [Parameter] public EventCallback<(string? Upit, string? SekcijaId, int? Status)> Promjena { get; set; }
 
-    private List<Sekcija> _sekcije = [];
+    private List<Stavka> _sekcije = [];
 
     private string StatusTekst
     {

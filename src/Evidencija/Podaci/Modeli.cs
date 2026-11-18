@@ -1,6 +1,6 @@
 namespace Evidencija.Podaci;
 
-public sealed class Sekcija
+public sealed class Stavka
 {
     public string Id { get; set; } = "";
     public string Naziv { get; set; } = "";
@@ -14,6 +14,8 @@ public sealed class Clan
     public const int Izasao = 1;
 
     public string Id { get; set; } = "";
+    /// <summary>Članski broj (brojka) – za poziv na broj na uplatnici.</summary>
+    public int? ClanskiBroj { get; set; }
     public string Ime { get; set; } = "";
     public string Prezime { get; set; } = "";
     public string? Nadimak { get; set; }

@@ -2,6 +2,7 @@
 @page "/clanovi/{Id}"
 @inject ClanoviServis Servis
 @inject SekcijeServis Sekcije
+@inject VrsteClanstvaServis Vrste
 @inject FotoServis Fotografije
 @inject NavigationManager Nav
 @implements IDisposable
@@ -15,6 +16,10 @@
 
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <h1 class="h3 mb-0 me-auto">@(_novi ? "➕ Novi član" : _clan.PrezimeIme)</h1>
+    @if (!_novi)
+    {
+        <a class="btn btn-outline-secondary" href="clanarina/@_clan.Id/@DateTime.Today.Year">💶 Članarina</a>
+    }
     <a class="btn btn-outline-secondary" href="clanovi">← Članovi</a>
 </div>
 
@@ -53,6 +58,18 @@
                             }
                         </select></div>
                 }
+                @if (_vrste.Count > 0)
+                {
+                    <div class="col-md-4"><label class="form-label">Vrsta članstva</label>
+                        <select class="form-select" @bind="_clan.VrstaClanstvaId">
+                            <option value="">—</option>
+                            @foreach (var v in _vrste.Where(v => !v.Skrivena || v.Id == _clan.VrstaClanstvaId))
+                            {
+                                <option value="@v.Id">@v.Naziv</option>
+                            }
+                        </select></div>
+                }
+                <div class="col-md-2"><label class="form-label">Članski br.</label><input type="number" min="1" class="form-control" @bind="_clan.ClanskiBroj" placeholder="auto" /></div>
                 <div class="col-md-4"><label class="form-label">Član od</label><DatumPolje @bind-Value="_clan.ClanOd" /></div>
                 <div class="col-md-4"><label class="form-label">Status</label>
                     <select class="form-select" @bind="_clan.Status">
@@ -141,13 +158,14 @@
     private Clan? _clan;
     private bool _novi, _potvrdaBrisanja, _spremljeno;
     private string? _novaFoto, _greska, _upozorenje, _greskaFoto;
-    private List<Sekcija> _sekcije = [];
+    private List<Stavka> _sekcije = [], _vrste = [];
 
     protected override void OnParametersSet()
     {
         _novi = string.IsNullOrEmpty(Id);
         _clan = _novi ? new Clan { ClanOd = DateTime.Today.ToString("yyyy-MM-dd") } : Servis.Dohvati(Id!)?.Kopija();
         _sekcije = Sekcije.Sve(iSkrivene: true);
+        _vrste = Vrste.Sve(iSkrivene: true);
     }
 
     private async Task NovaFotografija(InputFileChangeEventArgs e)

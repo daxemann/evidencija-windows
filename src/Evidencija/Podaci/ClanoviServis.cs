@@ -56,6 +56,7 @@ public sealed class ClanoviServis
         c.Prezime = c.Prezime.Trim();
         var novi = string.IsNullOrEmpty(c.Id);
         if (novi) c.Id = Baza.NoviId();
+        c.ClanskiBroj ??= Convert.ToInt32(_baza.Vrijednost("SELECT COALESCE(MAX(ClanskiBroj), 0) + 1 FROM Clanovi"));
         var sada = Baza.Sada();
 
         var parametri = Polja.Select(p => ("$" + p.Name, Vrijednost(c, p))).ToList();
@@ -106,7 +107,7 @@ public sealed class ClanoviServis
         {
             var i = r.GetOrdinal(p.Name);
             if (r.IsDBNull(i)) continue;
-            if (p.PropertyType == typeof(int))
+            if (p.PropertyType == typeof(int) || p.PropertyType == typeof(int?))
             {
                 p.SetValue(c, r.GetInt32(i));
                 continue;
