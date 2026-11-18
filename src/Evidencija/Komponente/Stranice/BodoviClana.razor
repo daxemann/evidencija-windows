@@ -1,0 +1,85 @@
+@page "/bodovi/clan/{ClanId}"
+@inject BodoviServis Servis
+@inject ClanoviServis Clanovi
+@inject NavigationManager Nav
+@using Evidencija.Pomoc
+
+@if (_clan == null)
+{
+    <div class="alert alert-warning">Član nije pronađen. <a href="bodovi">← Bodovi</a></div>
+    return;
+}
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-auto">🔨 @_clan.PrezimeIme</h1>
+    <GodinaBirac Godina="_godina" GodinaChanged="PromijeniGodinu" />
+    <IspisGumb />
+    <a class="btn btn-primary no-print" href="bodovi/upis?clan=@ClanId">➕ Upis</a>
+    <a class="btn btn-outline-secondary no-print" href="bodovi">← Bodovi</a>
+</div>
+
+<div class="row g-3 mb-3" style="max-width:720px">
+    <div class="col"><div class="card"><div class="card-body py-2 text-center"><div class="small text-danger">Staro</div><div class="fs-5 fw-semibold text-danger">@Tekst.Bodovi(_s.Staro)</div></div></div></div>
+    <div class="col"><div class="card"><div class="card-body py-2 text-center"><div class="small text-muted">Novo</div><div class="fs-5 fw-semibold">@Tekst.Bodovi(_s.Novo)</div></div></div></div>
+    <div class="col"><div class="card"><div class="card-body py-2 text-center"><div class="small text-muted">Ukupno @BodoviServis.NazivGodine(_godina, _p.Pocetak)</div><div class="fs-5 fw-semibold">@Tekst.Bodovi(_s.Ukupno)</div></div></div></div>
+</div>
+@if (_p.Minimum > 0 && _s.Ukupno < _p.Minimum)
+{
+    <div class="alert alert-warning" style="max-width:720px">Do obveze od @Tekst.Bodovi(_p.Minimum) bodova nedostaje <b>@Tekst.Bodovi(_p.Minimum - _s.Ukupno)</b>.</div>
+}
+
+@if (_upisi.Count == 0)
+{
+    <p class="text-muted">U ovoj bodovnoj godini nema upisa.</p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead><tr><th>Datum</th><th>Vrsta / opis</th><th>Dodaci</th><th class="text-end">Bodovi</th></tr></thead>
+        <tbody>
+            @foreach (var a in _upisi)
+            {
+                <tr class="klikabilno" @onclick='() => Nav.NavigateTo($"bodovi/upis/{a.Id}")'>
+                    <td class="text-nowrap">@Tekst.Datum(a.Datum)</td>
+                    <td>
+                        @if (a.JePrijenos){<span class="badge text-bg-danger me-1">staro</span>}
+                        @a.VrstaNaziv@if (!string.IsNullOrEmpty(a.VrstaNaziv) && !string.IsNullOrEmpty(a.Opis)){<span> – </span>}@a.Opis
+                    </td>
+                    <td class="small">@string.Join(", ", a.Oprema.Select(d => $"{d.N} +{Tekst.Bodovi(d.B)}"))</td>
+                    <td class="text-end fw-semibold @(a.Bodovi < 0 ? "text-danger" : "")">@Tekst.Bodovi(a.Bodovi)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public string ClanId { get; set; } = "";
+    [SupplyParameterFromQuery(Name = "g")] public int? GodinaIzUpita { get; set; }
+
+    private Clan? _clan;
+    private PostavkeBodova _p = new();
+    private int _godina;
+    private List<RadnaAkcija> _upisi = [];
+    private StanjeBodova _s = new(0, 0);
+
+    protected override void OnParametersSet()
+    {
+        _p = Servis.Postavke();
+        _clan = Clanovi.Dohvati(ClanId);
+        _godina = GodinaIzUpita ?? Servis.TrenutnaGodina();
+        Ucitaj();
+    }
+
+    private void PromijeniGodinu(int g)
+    {
+        _godina = g;
+        Ucitaj();
+    }
+
+    private void Ucitaj()
+    {
+        _upisi = Servis.ZaGodinu(_godina, ClanId);
+        _s = BodoviServis.Zbroj(_upisi);
+    }
+}

@@ -1,0 +1,100 @@
+@page "/bodovi"
+@inject BodoviServis Servis
+@inject ClanoviServis Clanovi
+@inject NavigationManager Nav
+@using Evidencija.Pomoc
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-auto">🔨 Bodovi @BodoviServis.NazivGodine(_godina, _p.Pocetak)</h1>
+    <GodinaBirac Godina="_godina" GodinaChanged="PromijeniGodinu" />
+    <a class="btn btn-outline-secondary no-print" href="bodovi/prijenos?g=@_godina">↪️ Prijenos</a>
+    <IspisGumb />
+    <a class="btn btn-primary no-print" href="bodovi/upis">➕ Upis bodova</a>
+</div>
+<p class="small text-muted">
+    Bodovna godina @Tekst.Datum(_raspon.Od) – @Tekst.Datum(_raspon.Do)
+    @if (_p.Minimum > 0){<span> · obveza najmanje <b>@Tekst.Bodovi(_p.Minimum)</b> bodova</span>}
+    · <span class="text-danger">staro</span> = preneseno iz prošle godine
+</p>
+
+<div class="d-flex flex-wrap gap-2 align-items-start">
+    <ClanFilter Upit="@_upit" SekcijaId="@_sekcijaId" Status="null" Promjena="Filtriraj" />
+    @if (_p.Minimum > 0)
+    {
+        <div class="form-check mt-2 no-print">
+            <input class="form-check-input" type="checkbox" id="ispod" checked="@_samoIspod" @onchange="e => { _samoIspod = (bool)(e.Value ?? false); Primijeni(); }" />
+            <label class="form-check-label" for="ispod">Samo ispod minimuma</label>
+        </div>
+    }
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead><tr><th>#</th><th>Član</th><th class="text-end text-danger">Staro</th><th class="text-end">Novo</th><th class="text-end">Ukupno</th><th></th></tr></thead>
+        <tbody>
+            @{ var rb = 0; }
+            @foreach (var (c, s) in _redovi)
+            {
+                <tr class="klikabilno" @onclick='() => Nav.NavigateTo($"bodovi/clan/{c.Id}?g={_godina}")'>
+                    <td class="text-muted">@(++rb)</td>
+                    <td><b>@c.PrezimeIme</b>@if (c.Status == Clan.Izasao){<span class="badge text-bg-secondary ms-1">izašao</span>}</td>
+                    <td class="text-end text-danger">@Tekst.Bodovi(s.Staro)</td>
+                    <td class="text-end">@Tekst.Bodovi(s.Novo)</td>
+                    <td class="text-end fw-semibold">@Tekst.Bodovi(s.Ukupno)</td>
+                    <td>@if (_p.Minimum > 0 && s.Ukupno < _p.Minimum){<span class="badge text-bg-warning">nedostaje @Tekst.Bodovi(_p.Minimum - s.Ukupno)</span>}</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<p class="small text-muted">Prikazano: @_redovi.Count · Ukupno bodova: @Tekst.Bodovi(_redovi.Sum(r => r.S.Ukupno))</p>
+
+@code {
+    private PostavkeBodova _p = new();
+    private int _godina;
+    private (string Od, string Do) _raspon;
+    private List<Clan> _svi = [];
+    private Dictionary<string, StanjeBodova> _stanje = [];
+    private List<(Clan C, StanjeBodova S)> _redovi = [];
+    private string? _upit, _sekcijaId;
+    private bool _samoIspod;
+
+    protected override void OnInitialized()
+    {
+        _p = Servis.Postavke();
+        _godina = Servis.TrenutnaGodina();
+        _svi = Clanovi.Svi();
+        Ucitaj();
+    }
+
+    private void PromijeniGodinu(int g)
+    {
+        _godina = g;
+        Ucitaj();
+    }
+
+    private void Ucitaj()
+    {
+        _raspon = BodoviServis.Raspon(_godina, _p.Pocetak);
+        _stanje = Servis.Stanje(_godina);
+        Primijeni();
+    }
+
+    private void Filtriraj((string? Upit, string? SekcijaId, int? Status) f)
+    {
+        (_upit, _sekcijaId, _) = f;
+        Primijeni();
+    }
+
+    /// <summary>Aktivni članovi + izašli koji imaju bodove u toj godini; najviše bodova prvo.</summary>
+    private void Primijeni()
+    {
+        var nula = new StanjeBodova(0, 0);
+        _redovi = ClanoviServis.Filtriraj(_svi, _upit, _sekcijaId, null)
+            .Select(c => (c, _stanje.GetValueOrDefault(c.Id, nula)))
+            .Where(r => r.c.Status == Clan.Aktivan || _stanje.ContainsKey(r.c.Id))
+            .Where(r => !_samoIspod || r.Item2.Ukupno < _p.Minimum)
+            .OrderByDescending(r => r.Item2.Ukupno).ThenBy(r => r.c.PrezimeIme, StringComparer.Create(System.Globalization.CultureInfo.GetCultureInfo("hr-HR"), true))
+            .ToList();
+    }
+}

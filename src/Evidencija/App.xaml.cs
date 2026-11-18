@@ -38,6 +38,9 @@ public partial class App : Application
         usluge.AddSingleton<VrsteClanstvaServis>();
         usluge.AddSingleton<ClanarinaServis>();
         usluge.AddSingleton<UdrugaServis>();
+        usluge.AddSingleton<VrsteAkcijaServis>();
+        usluge.AddSingleton<DodaciAkcijaServis>();
+        usluge.AddSingleton<BodoviServis>();
         Usluge = usluge.BuildServiceProvider();
 
         base.OnStartup(e);

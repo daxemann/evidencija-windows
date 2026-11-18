@@ -129,6 +129,43 @@ public static class Shema
         CREATE INDEX IX_Uplate_Clanarina ON Uplate (ClanarinaId);
         CREATE INDEX IX_Rate_Clanarina ON ClanarinaRate (ClanarinaId);
         """,
+
+        // 4 – bodovi (radne akcije). Vrsta upisa: akcija / prijenos (staro iz prošle godine).
+        """
+        CREATE TABLE VrsteAkcija (
+            Id TEXT NOT NULL PRIMARY KEY,
+            Naziv TEXT NOT NULL,
+            Bodovi REAL NOT NULL DEFAULT 0,
+            Skrivena INTEGER NOT NULL DEFAULT 0,
+            Kreirano TEXT NOT NULL,
+            Azurirano TEXT NOT NULL,
+            Obrisano INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE DodaciAkcija (
+            Id TEXT NOT NULL PRIMARY KEY,
+            Naziv TEXT NOT NULL,
+            Bodovi REAL NOT NULL DEFAULT 0,
+            Skrivena INTEGER NOT NULL DEFAULT 0,
+            Kreirano TEXT NOT NULL,
+            Azurirano TEXT NOT NULL,
+            Obrisano INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE RadneAkcije (
+            Id TEXT NOT NULL PRIMARY KEY,
+            ClanId TEXT NOT NULL REFERENCES Clanovi (Id),
+            Datum TEXT NOT NULL,
+            Vrsta TEXT NOT NULL DEFAULT 'akcija',
+            VrstaAkcijeId TEXT NULL,
+            VrstaNaziv TEXT NULL,                 -- snimka naziva u trenutku upisa
+            Oprema TEXT NULL,                     -- snimka dodataka: JSON [{"n":"Traktor","b":5}]
+            Opis TEXT NULL,
+            Bodovi REAL NOT NULL,
+            Kreirano TEXT NOT NULL,
+            Azurirano TEXT NOT NULL,
+            Obrisano INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE INDEX IX_RadneAkcije_Clan ON RadneAkcije (ClanId, Datum);
+        """,
     ];
 
     public static int TrenutnaVerzija => Koraci.Length;

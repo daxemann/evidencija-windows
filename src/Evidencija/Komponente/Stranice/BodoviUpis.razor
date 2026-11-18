@@ -1,0 +1,183 @@
+@page "/bodovi/upis"
+@page "/bodovi/upis/{Id}"
+@inject BodoviServis Servis
+@inject VrsteAkcijaServis Vrste
+@inject DodaciAkcijaServis Dodaci
+@inject NavigationManager Nav
+@using Evidencija.Pomoc
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-auto">@(_novi ? "➕ Upis bodova" : "✏️ Promjena upisa")</h1>
+    <a class="btn btn-outline-secondary" href="bodovi">← Bodovi</a>
+</div>
+
+@if (_a == null)
+{
+    <div class="alert alert-warning">Upis nije pronađen.</div>
+    return;
+}
+<Poruka Tekst="@_spremljeno" Vrsta="success" />
+
+<form @onsubmit="() => Spremi(false)" @onsubmit:preventDefault style="max-width:720px">
+    <div class="card mb-3"><div class="card-body">
+        <div class="row g-3">
+            <div class="col-12"><label class="form-label">Član *</label><ClanBirac @bind-ClanId="_a.ClanId" /></div>
+            <div class="col-sm-5"><label class="form-label">Datum *</label><DatumPolje @bind-Value="_datum" /></div>
+
+            @if (_a.JePrijenos)
+            {
+                <div class="col-sm-7"><label class="form-label">Vrsta</label><div class="form-control bg-body-tertiary">@_a.VrstaNaziv</div></div>
+            }
+            else
+            {
+                <div class="col-sm-7"><label class="form-label">Vrsta</label>
+                    <select class="form-select" value="@_vrstaId" @onchange="e => OdaberiVrstu(e.Value?.ToString())">
+                        <option value="">— ostalo (upišite opis) —</option>
+                        @foreach (var v in _vrste.Where(v => !v.Skrivena || v.Id == _vrstaId))
+                        {
+                            <option value="@v.Id">@v.Naziv (@Tekst.Bodovi(v.Bodovi))</option>
+                        }
+                    </select></div>
+
+                @if (_dodaci.Count > 0)
+                {
+                    <div class="col-12"><label class="form-label">Dodaci (oprema)</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach (var d in _dodaci.Where(d => !d.Skrivena || _odabrani.ContainsKey(d.Naziv)))
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="d-@d.Id" checked="@_odabrani.ContainsKey(d.Naziv)"
+                                           @onchange="e => Dodatak(d, (bool)(e.Value ?? false))" />
+                                    <label class="form-check-label" for="d-@d.Id">@d.Naziv <span class="text-muted">+@Tekst.Bodovi(_odabrani.GetValueOrDefault(d.Naziv, d.Bodovi))</span></label>
+                                </div>
+                            }
+                        </div></div>
+                }
+            }
+
+            <div class="col-sm-8"><label class="form-label">Opis</label><input class="form-control" @bind="_a.Opis" placeholder="npr. košnja livade kod čeke 3" /></div>
+            <div class="col-sm-4"><label class="form-label">Bodovi *</label>
+                <input class="form-control text-end fw-semibold" @bind="_bodovi" />
+                @if (_prijedlog != null && Tekst.ProcitajBroj(_bodovi) != _prijedlog)
+                {
+                    <button type="button" class="btn btn-link btn-sm px-0" @onclick="() => _bodovi = Tekst.Bodovi(_prijedlog.Value)">prijedlog: @Tekst.Bodovi(_prijedlog.Value)</button>
+                }
+                else
+                {
+                    <div class="form-text">minus = oduzimanje (npr. -5)</div>
+                }
+            </div>
+        </div>
+    </div></div>
+
+    <Poruka Tekst="@_greska" />
+    <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-primary">💾 Spremi</button>
+        @if (_novi)
+        {
+            <button type="button" class="btn btn-outline-primary" @onclick="() => Spremi(true)">💾 Spremi i novi upis</button>
+        }
+        <a class="btn btn-outline-secondary" href="bodovi">Odustani</a>
+        @if (!_novi)
+        {
+            @if (_potvrda)
+            {
+                <button type="button" class="btn btn-danger ms-auto" @onclick="Obrisi">Da, obriši upis</button>
+                <button type="button" class="btn btn-outline-secondary" @onclick="() => _potvrda = false">Ne</button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-outline-danger ms-auto" @onclick="() => _potvrda = true">🗑️ Obriši</button>
+            }
+        }
+    </div>
+</form>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    [SupplyParameterFromQuery(Name = "clan")] public string? ClanIzUpita { get; set; }
+
+    private RadnaAkcija? _a;
+    private List<Stavka> _vrste = [], _dodaci = [];
+    /// <summary>Odabrani dodaci: naziv → bodovi (snimka).</summary>
+    private Dictionary<string, double> _odabrani = [];
+    private string? _vrstaId, _datum, _bodovi, _greska, _spremljeno;
+    private double? _prijedlog;
+    private bool _novi, _potvrda;
+
+    protected override void OnParametersSet()
+    {
+        _vrste = Vrste.Sve(iSkrivene: true);
+        _dodaci = Dodaci.Sve(iSkrivene: true);
+        _novi = string.IsNullOrEmpty(Id);
+        _a = _novi ? new RadnaAkcija { ClanId = ClanIzUpita ?? "" } : Servis.Dohvati(Id!);
+        if (_a == null) return;
+        _datum = _novi ? DateTime.Today.ToString("yyyy-MM-dd") : _a.Datum;
+        _vrstaId = _a.VrstaAkcijeId;
+        _odabrani = _a.Oprema.ToDictionary(d => d.N, d => d.B);
+        _bodovi = _novi ? null : Tekst.Bodovi(_a.Bodovi);
+        IzracunajPrijedlog(promijeniBodove: false);
+    }
+
+    private void OdaberiVrstu(string? id)
+    {
+        _vrstaId = string.IsNullOrEmpty(id) ? null : id;
+        IzracunajPrijedlog(promijeniBodove: true);
+    }
+
+    private void Dodatak(Stavka d, bool ukljucen)
+    {
+        if (ukljucen) _odabrani[d.Naziv] = d.Bodovi;
+        else _odabrani.Remove(d.Naziv);
+        IzracunajPrijedlog(promijeniBodove: true);
+    }
+
+    /// <summary>Prijedlog = bodovi vrste + dodaci; upisuje se u polje dok ga korisnik sam ne promijeni.</summary>
+    private void IzracunajPrijedlog(bool promijeniBodove)
+    {
+        var vrsta = _vrste.FirstOrDefault(v => v.Id == _vrstaId);
+        var stari = _prijedlog;
+        _prijedlog = vrsta == null && _odabrani.Count == 0 ? null
+            : BodoviServis.Prijedlog(vrsta?.Bodovi ?? 0, _odabrani.Select(o => new Dodatak { N = o.Key, B = o.Value }));
+        var rucnoPromijenjeno = _bodovi != null && stari != null && Tekst.ProcitajBroj(_bodovi) != stari;
+        if (promijeniBodove && _prijedlog != null && (_bodovi == null || !rucnoPromijenjeno))
+            _bodovi = Tekst.Bodovi(_prijedlog.Value);
+    }
+
+    private void Spremi(bool novi)
+    {
+        var a = _a!;
+        _spremljeno = null;
+        _greska = string.IsNullOrEmpty(a.ClanId) ? "Odaberite člana."
+            : _datum == null ? "Upišite datum."
+            : Tekst.ProcitajBroj(_bodovi) is null ? "Upišite bodove (npr. 5, 2,5 ili -3)."
+            : _vrstaId == null && string.IsNullOrWhiteSpace(a.Opis) && !a.JePrijenos ? "Odaberite vrstu ili upišite opis."
+            : null;
+        if (_greska != null) return;
+
+        a.Datum = _datum!;
+        a.Bodovi = Tekst.ProcitajBroj(_bodovi)!.Value;
+        if (!a.JePrijenos)
+        {
+            a.VrstaAkcijeId = _vrstaId;
+            a.VrstaNaziv = _vrste.FirstOrDefault(v => v.Id == _vrstaId)?.Naziv;
+            a.Oprema = _odabrani.Select(o => new Dodatak { N = o.Key, B = o.Value }).ToList();
+        }
+        Servis.Spremi(a);
+
+        if (novi)
+        {
+            // isti datum i vrsta ostaju – brže kad više članova radi isto
+            _a = new RadnaAkcija();
+            _spremljeno = "Spremljeno. Odaberite sljedećeg člana.";
+            return;
+        }
+        Nav.NavigateTo($"bodovi/clan/{a.ClanId}");
+    }
+
+    private void Obrisi()
+    {
+        Servis.Obrisi(_a!.Id);
+        Nav.NavigateTo($"bodovi/clan/{_a.ClanId}");
+    }
+}

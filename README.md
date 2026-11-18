@@ -4,7 +4,7 @@ Program za Windows **bez interneta**: članovi, članarina, bodovi i imenik za l
 Besplatno. Samostalan projekt, odvojen od online aplikacije Lovačka Evidencija.
 
 ## Stanje
-U izradi (0.3.0): prijava i šifriranje, članovi, imenik, sekcije, članarina s ratama i HUB-3 uplatnicama. Slijede bodovi, uvoz, kopije, instalacija.
+U izradi (0.4.0): prijava i šifriranje, članovi, imenik, sekcije, članarina s ratama i HUB-3 uplatnicama, bodovi s opremom i prijenosom. Slijede uvoz, kopije, PDF popisi, instalacija.
 
 ## Sigurnost ukratko
 - Lozinka + rezervna lozinka; ključ podataka postoji samo u memoriji dok je program otključan.

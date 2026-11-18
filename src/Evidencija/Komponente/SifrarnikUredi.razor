@@ -1,7 +1,11 @@
-@* Uređivanje jednostavnog popisa (sekcije, vrste članstva): dodaj, preimenuj, sakrij *@
+@* Uređivanje jednostavnog popisa (sekcije, vrste članstva, vrste akcija i dodaci s bodovima): dodaj, preimenuj, bodovi, sakrij *@
 
 <form class="d-flex gap-2 mb-3" style="max-width:480px" @onsubmit="Dodaj" @onsubmit:preventDefault>
     <input class="form-control" placeholder="@Placeholder" @bind="_novi" />
+    @if (Servis.ImaBodove)
+    {
+        <input class="form-control text-end" style="max-width:110px" placeholder="bodova" @bind="_noviBodovi" />
+    }
     <button class="btn btn-primary text-nowrap">➕ Dodaj</button>
 </form>
 <Poruka Tekst="@_greska" />
@@ -9,7 +13,7 @@
 @if (_stavke.Count > 0)
 {
     <table class="table align-middle" style="max-width:720px">
-        <thead><tr><th>Naziv</th><th>Članova</th><th></th></tr></thead>
+        <thead><tr><th>Naziv</th>@if (Servis.ImaBodove){<th style="width:120px">Bodova</th>}@if (BrojClanova != null){<th>Članova</th>}<th></th></tr></thead>
         <tbody>
             @foreach (var s in _stavke)
             {
@@ -25,7 +29,11 @@
                             @if (s.Skrivena) {<span class="badge text-bg-secondary ms-1">skriveno</span>}
                         }
                     </td>
-                    <td>@(BrojClanova?.Invoke(s.Id) ?? 0)</td>
+                    @if (Servis.ImaBodove)
+                    {
+                        <td><input class="form-control form-control-sm text-end" value="@Evidencija.Pomoc.Tekst.Bodovi(s.Bodovi)" @onchange="e => PromijeniBodove(s, e.Value?.ToString())" /></td>
+                    }
+                    @if (BrojClanova != null){<td>@BrojClanova(s.Id)</td>}
                     <td class="text-end text-nowrap">
                         @if (_uredi == s.Id)
                         {
@@ -53,6 +61,7 @@
 
     private List<Stavka> _stavke = [];
     private string _novi = "", _naziv = "";
+    private string? _noviBodovi;
     private string? _uredi, _greska;
 
     protected override void OnParametersSet() => _stavke = Servis.Sve(iSkrivene: true);
@@ -67,8 +76,12 @@
     {
         _greska = Servis.Greska(_novi);
         if (_greska != null) return;
-        Servis.Dodaj(_novi);
+        double? bodovi = null;
+        if (Servis.ImaBodove && (bodovi = Evidencija.Pomoc.Tekst.ProcitajBroj(_noviBodovi)) == null) { _greska = "Upišite bodove (npr. 5 ili 2,5)."; return; }
+        var id = Servis.Dodaj(_novi);
+        if (bodovi != null) Servis.PostaviBodove(id, bodovi.Value);
         _novi = "";
+        _noviBodovi = null;
         await Osvjezi();
     }
 
@@ -78,6 +91,14 @@
         if (_greska != null) return;
         Servis.Preimenuj(s.Id, _naziv);
         _uredi = null;
+        await Osvjezi();
+    }
+
+    private async Task PromijeniBodove(Stavka s, string? tekst)
+    {
+        if (Evidencija.Pomoc.Tekst.ProcitajBroj(tekst) is not { } b) { _greska = $"Bodovi za „{s.Naziv}“ nisu ispravni."; return; }
+        _greska = null;
+        Servis.PostaviBodove(s.Id, b);
         await Osvjezi();
     }
 

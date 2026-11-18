@@ -1,0 +1,58 @@
+@* Izbor člana: upiši dio imena/nadimka (bez kvačica) → klik na prijedlog. Samo aktivni članovi. *@
+@inject ClanoviServis Clanovi
+
+@if (_odabran != null)
+{
+    <div class="input-group">
+        <span class="form-control bg-body-tertiary"><b>@_odabran.PrezimeIme</b>@if (!string.IsNullOrEmpty(_odabran.Nadimak)){<span class="text-muted"> „@_odabran.Nadimak“</span>}</span>
+        <button type="button" class="btn btn-outline-secondary" @onclick="Ponisti" title="Drugi član">✕</button>
+    </div>
+}
+else
+{
+    <input type="search" class="form-control" placeholder="🔎 Upišite ime ili nadimak" value="@_upit"
+           @oninput="e => { _upit = e.Value?.ToString(); Trazi(); }" autocomplete="off" />
+    @if (_prijedlozi.Count > 0)
+    {
+        <div class="list-group mt-1 shadow-sm" style="max-height:260px;overflow:auto">
+            @foreach (var c in _prijedlozi)
+            {
+                <button type="button" class="list-group-item list-group-item-action" @onclick="() => Odaberi(c)">
+                    <b>@c.PrezimeIme</b>@if (!string.IsNullOrEmpty(c.Nadimak)){<span class="text-muted"> „@c.Nadimak“</span>}
+                    @if (!string.IsNullOrEmpty(c.Mjesto)){<span class="small text-muted"> · @c.Mjesto</span>}
+                </button>
+            }
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public string? ClanId { get; set; }
+    [Parameter] public EventCallback<string?> ClanIdChanged { get; set; }
+
+    private List<Clan> _aktivni = [], _prijedlozi = [];
+    private Clan? _odabran;
+    private string? _upit;
+
+    protected override void OnInitialized() => _aktivni = Clanovi.Svi().Where(c => c.Status == Clan.Aktivan).ToList();
+
+    protected override void OnParametersSet() =>
+        _odabran = ClanId == null ? null : _odabran?.Id == ClanId ? _odabran : Clanovi.Dohvati(ClanId);
+
+    private void Trazi() =>
+        _prijedlozi = string.IsNullOrWhiteSpace(_upit) ? [] : ClanoviServis.Filtriraj(_aktivni, _upit, null, null).Take(10).ToList();
+
+    private async Task Odaberi(Clan c)
+    {
+        _odabran = c;
+        _upit = null;
+        _prijedlozi = [];
+        await ClanIdChanged.InvokeAsync(c.Id);
+    }
+
+    private async Task Ponisti()
+    {
+        _odabran = null;
+        await ClanIdChanged.InvokeAsync(null);
+    }
+}

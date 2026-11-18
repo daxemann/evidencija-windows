@@ -5,6 +5,8 @@ public sealed class Stavka
     public string Id { get; set; } = "";
     public string Naziv { get; set; } = "";
     public bool Skrivena { get; set; }
+    /// <summary>Samo za popise s bodovima (vrste akcija, dodaci).</summary>
+    public double Bodovi { get; set; }
 }
 
 /// <summary>Član – imena svojstava = imena stupaca u tablici Clanovi.</summary>

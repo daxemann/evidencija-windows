@@ -1,0 +1,83 @@
+@page "/postavke/bodovi"
+@inject BodoviServis Servis
+@inject VrsteAkcijaServis Vrste
+@inject DodaciAkcijaServis Dodaci
+@using Evidencija.Pomoc
+
+<h1 class="h3 mb-3">🔨 Postavke bodova</h1>
+
+<div class="row g-4">
+    <div class="col-xl-6">
+        <div class="card mb-4"><div class="card-body">
+            <h2 class="h6">Vrste radnih akcija</h2>
+            <p class="small text-muted">Bodovi su prijedlog kod upisa – uvijek se mogu promijeniti. Promjena ovdje ne mijenja stare upise.</p>
+            <SifrarnikUredi Servis="Vrste" Placeholder="npr. Košnja, Hranilište, Godišnja obveza" />
+        </div></div>
+        <div class="card"><div class="card-body">
+            <h2 class="h6">Dodaci (oprema)</h2>
+            <p class="small text-muted">Tko donese opremu, dobiva njezine bodove povrh osnovnih (npr. Traktor +5, Motorna pila +2).</p>
+            <SifrarnikUredi Servis="Dodaci" Placeholder="npr. Traktor, Motorna pila, Prikolica" />
+        </div></div>
+    </div>
+
+    <div class="col-xl-6">
+        <form class="card" @onsubmit="Spremi" @onsubmit:preventDefault><div class="card-body">
+            <h2 class="h6">Bodovna godina i pravila</h2>
+            <div class="row g-2">
+                <div class="col-sm-6"><label class="form-label">Početak bodovne godine</label>
+                    <select class="form-select" @bind="_p.Pocetak">
+                        <option value="04-01">1.4. (lovna godina)</option>
+                        <option value="01-01">1.1. (kalendarska)</option>
+                        @if (_p.Pocetak is not ("04-01" or "01-01")){<option value="@_p.Pocetak">@_p.Pocetak</option>}
+                    </select></div>
+                <div class="col-sm-6"><label class="form-label">Obveza: najmanje bodova</label>
+                    <input class="form-control text-end" @bind="_minimum" placeholder="0 = bez obveze" /></div>
+
+                <div class="col-12 mt-3"><label class="form-label">Prijenos u novu godinu</label>
+                    <select class="form-select" @bind="_p.Prijenos">
+                        <option value="@NacinPrijenosa.Nista">Bez prijenosa – svi kreću od 0</option>
+                        <option value="@NacinPrijenosa.Sve">Prenesi sve bodove</option>
+                        <option value="@NacinPrijenosa.Najvise">Prenesi, ali najviše …</option>
+                        <option value="@NacinPrijenosa.Fiksno">Fiksni iznos (tko ga nije dosegao → 0)</option>
+                    </select></div>
+                @if (_p.Prijenos is NacinPrijenosa.Najvise or NacinPrijenosa.Fiksno)
+                {
+                    <div class="col-sm-6"><label class="form-label">Broj bodova</label><input class="form-control text-end" @bind="_broj" /></div>
+                }
+                <div class="col-12"><div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="minus" @bind="_p.PrijenosMinus" />
+                    <label class="form-check-label" for="minus">Prenosi i minus (dug bodova)</label>
+                </div></div>
+            </div>
+            <p class="small text-muted mt-2">Prijenos se radi ručno: Bodovi → ↪️ Prijenos (prijedlog po ovom pravilu, iznos po članu se može promijeniti).</p>
+            <Poruka Tekst="@_greska" />
+            <Poruka Tekst="@_uspjeh" Vrsta="success" />
+            <button class="btn btn-primary">💾 Spremi</button>
+        </div></form>
+    </div>
+</div>
+
+@code {
+    private PostavkeBodova _p = new();
+    private string? _minimum, _broj, _greska, _uspjeh;
+
+    protected override void OnInitialized()
+    {
+        _p = Servis.Postavke();
+        _minimum = Tekst.Bodovi(_p.Minimum);
+        _broj = Tekst.Bodovi(_p.PrijenosBroj);
+    }
+
+    private void Spremi()
+    {
+        _uspjeh = null;
+        var min = string.IsNullOrWhiteSpace(_minimum) ? 0 : Tekst.ProcitajBroj(_minimum);
+        var broj = string.IsNullOrWhiteSpace(_broj) ? 0 : Tekst.ProcitajBroj(_broj);
+        _greska = min is null or < 0 ? "Najmanje bodova nije ispravno." : broj is null or < 0 ? "Broj bodova za prijenos nije ispravan." : null;
+        if (_greska != null) return;
+        _p.Minimum = min!.Value;
+        _p.PrijenosBroj = broj!.Value;
+        Servis.SpremiPostavke(_p);
+        _uspjeh = "Spremljeno.";
+    }
+}

@@ -40,6 +40,18 @@ public static class Tekst
         return kontrola == oib[10] - '0';
     }
 
+    /// <summary>Bodovi za prikaz: 12 / 12,5 / -3</summary>
+    public static string Bodovi(double b) => Math.Round(b, 2).ToString("0.##", Hr);
+
+    /// <summary>„2,5“, „2.5“, „-3“ → broj; prazno ili neispravno → null.</summary>
+    public static double? ProcitajBroj(string? s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return null;
+        var t = s.Trim().Replace(" ", "").Replace(',', '.');
+        return double.TryParse(t, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var d)
+            ? Math.Round(d, 2) : null;
+    }
+
     /// <summary>Datum iz baze (yyyy-MM-dd) za prikaz: 5.3.1970.</summary>
     public static string Datum(string? iso) =>
         DateOnly.TryParse(iso, CultureInfo.InvariantCulture, out var d) ? d.ToString("d.M.yyyy.", Hr) : "";

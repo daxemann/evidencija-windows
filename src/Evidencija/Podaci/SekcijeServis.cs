@@ -7,18 +7,22 @@ public abstract class Sifrarnik
 {
     private readonly Baza _baza;
     private readonly string _tablica;
+    private readonly bool _imaBodove;
 
-    protected Sifrarnik(Baza baza, string tablica)
+    protected Sifrarnik(Baza baza, string tablica, bool imaBodove = false)
     {
         _baza = baza;
         _tablica = tablica;
+        _imaBodove = imaBodove;
     }
+
+    public bool ImaBodove => _imaBodove;
 
     public List<Stavka> Sve(bool iSkrivene = false)
     {
         var popis = _baza.Redovi(
-            $"SELECT Id, Naziv, Skrivena FROM {_tablica} WHERE Obrisano = 0" + (iSkrivene ? "" : " AND Skrivena = 0"),
-            r => new Stavka { Id = r.GetString(0), Naziv = r.GetString(1), Skrivena = r.GetInt32(2) == 1 });
+            $"SELECT Id, Naziv, Skrivena, {(_imaBodove ? "Bodovi" : "0")} FROM {_tablica} WHERE Obrisano = 0" + (iSkrivene ? "" : " AND Skrivena = 0"),
+            r => new Stavka { Id = r.GetString(0), Naziv = r.GetString(1), Skrivena = r.GetInt32(2) == 1, Bodovi = r.GetDouble(3) });
         popis.Sort((a, b) => Tekst.Usporedi(a.Naziv, b.Naziv));
         return popis;
     }
@@ -38,6 +42,13 @@ public abstract class Sifrarnik
         var id = Baza.NoviId();
         Spremi($"INSERT INTO {_tablica} (Id, Naziv, Kreirano, Azurirano) VALUES ($id, $n, $s, $s)", id, "dodano", ("$n", naziv.Trim()));
         return id;
+    }
+
+    /// <summary>Bodovi stavke (samo popisi s bodovima). Stari upisi zadržavaju svoju snimku.</summary>
+    public void PostaviBodove(string id, double bodovi)
+    {
+        if (!_imaBodove) throw new InvalidOperationException("Ovaj popis nema bodove.");
+        Spremi($"UPDATE {_tablica} SET Bodovi = $b, Azurirano = $s WHERE Id = $id", id, "promijenjeno", ("$b", Math.Round(bodovi, 2)));
     }
 
     public void Preimenuj(string id, string naziv) =>
@@ -62,3 +73,9 @@ public sealed class SekcijeServis(Baza baza) : Sifrarnik(baza, "Sekcije");
 
 /// <summary>Vrste članstva (npr. redovni, umirovljenik, mladi) – za iznos članarine.</summary>
 public sealed class VrsteClanstvaServis(Baza baza) : Sifrarnik(baza, "VrsteClanstva");
+
+/// <summary>Vrste radnih akcija s predloženim bodovima (npr. Košnja = 5).</summary>
+public sealed class VrsteAkcijaServis(Baza baza) : Sifrarnik(baza, "VrsteAkcija", imaBodove: true);
+
+/// <summary>Dodaci uz akciju s bodovima povrh osnovnih (npr. Traktor +5, Motorna pila +2).</summary>
+public sealed class DodaciAkcijaServis(Baza baza) : Sifrarnik(baza, "DodaciAkcija", imaBodove: true);

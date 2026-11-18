@@ -1,0 +1,91 @@
+@page "/bodovi/prijenos"
+@inject BodoviServis Servis
+@inject ClanoviServis Clanovi
+@using Evidencija.Pomoc
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+    <h1 class="h3 mb-0 me-auto">↪️ Prijenos bodova u @BodoviServis.NazivGodine(_godina, _p.Pocetak)</h1>
+    <GodinaBirac Godina="_godina" GodinaChanged="g => { _godina = g; Ucitaj(); }" />
+    <a class="btn btn-outline-secondary" href="bodovi">← Bodovi</a>
+</div>
+<p class="small text-muted mb-3">
+    Prijedlog iz ukupnih bodova @BodoviServis.NazivGodine(_godina - 1, _p.Pocetak) prema pravilu: <b>@OpisPravila</b>
+    (<a href="postavke/bodovi">promijeni</a>). Iznos se može promijeniti po članu. Preneseno se vodi kao <span class="text-danger">staro</span>.
+</p>
+<Poruka Tekst="@_poruka" Vrsta="success" />
+
+<table class="table align-middle" style="max-width:820px">
+    <thead><tr><th style="width:40px"><input class="form-check-input" type="checkbox" checked="@_redovi.All(r => r.Odabran)" @onchange="e => _redovi.ForEach(r => r.Odabran = (bool)(e.Value ?? false))" /></th>
+        <th>Član</th><th class="text-end">Ukupno prošle</th><th class="text-end" style="width:150px">Prenesi</th><th>Sad upisano</th></tr></thead>
+    <tbody>
+        @foreach (var r in _redovi)
+        {
+            <tr>
+                <td><input class="form-check-input" type="checkbox" @bind="r.Odabran" /></td>
+                <td>@r.Clan.PrezimeIme</td>
+                <td class="text-end">@Tekst.Bodovi(r.Prosle)</td>
+                <td><input class="form-control form-control-sm text-end" @bind="r.Iznos" /></td>
+                <td class="small">@(r.Postojeci == null ? "—" : Tekst.Bodovi(r.Postojeci.Value))</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<Poruka Tekst="@_greska" />
+<button class="btn btn-primary" @onclick="Spremi" disabled="@(!_redovi.Any(r => r.Odabran))">💾 Prenesi odabrane (@_redovi.Count(r => r.Odabran))</button>
+
+@code {
+    private sealed class Red
+    {
+        public required Clan Clan { get; init; }
+        public double Prosle { get; init; }
+        public double? Postojeci { get; init; }
+        public string? Iznos { get; set; }
+        public bool Odabran { get; set; }
+    }
+
+    [SupplyParameterFromQuery(Name = "g")] public int? GodinaIzUpita { get; set; }
+
+    private PostavkeBodova _p = new();
+    private int _godina;
+    private List<Red> _redovi = [];
+    private string? _greska, _poruka;
+
+    private string OpisPravila => _p.Prijenos switch
+    {
+        NacinPrijenosa.Sve => "prenose se svi bodovi",
+        NacinPrijenosa.Najvise => $"prenosi se najviše {Tekst.Bodovi(_p.PrijenosBroj)}",
+        NacinPrijenosa.Fiksno => $"tko ima barem {Tekst.Bodovi(_p.PrijenosBroj)}, dobiva {Tekst.Bodovi(_p.PrijenosBroj)}",
+        _ => "bez prijenosa (svi kreću od 0)",
+    } + (_p.PrijenosMinus ? ", prenosi se i minus" : "");
+
+    protected override void OnInitialized()
+    {
+        _p = Servis.Postavke();
+        _godina = GodinaIzUpita ?? Servis.TrenutnaGodina();
+        Ucitaj();
+    }
+
+    private void Ucitaj()
+    {
+        var prosle = Servis.Stanje(_godina - 1);
+        var sad = Servis.ZaGodinu(_godina).Where(a => a.JePrijenos).ToDictionary(a => a.ClanId, a => a.Bodovi);
+        _redovi = Clanovi.Svi().Where(c => c.Status == Clan.Aktivan).Select(c =>
+        {
+            var uk = prosle.GetValueOrDefault(c.Id)?.Ukupno ?? 0;
+            var prijedlog = BodoviServis.PrijedlogPrijenosa(uk, _p);
+            double? postoji = sad.TryGetValue(c.Id, out var b) ? b : null;
+            return new Red { Clan = c, Prosle = uk, Postojeci = postoji, Iznos = Tekst.Bodovi(postoji ?? prijedlog), Odabran = postoji == null && prijedlog != 0 };
+        }).ToList();
+        _greska = null;
+    }
+
+    private void Spremi()
+    {
+        _greska = _poruka = null;
+        var odabrani = _redovi.Where(r => r.Odabran).ToList();
+        if (odabrani.FirstOrDefault(r => Tekst.ProcitajBroj(r.Iznos) == null) is { } los) { _greska = $"Iznos za {los.Clan.PrezimeIme} nije ispravan."; return; }
+        foreach (var r in odabrani) Servis.Prenesi(r.Clan.Id, _godina, Tekst.ProcitajBroj(r.Iznos)!.Value);
+        Ucitaj();
+        _poruka = $"Preneseno za {odabrani.Count} članova.";
+    }
+}
