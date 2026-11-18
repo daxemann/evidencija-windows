@@ -4,7 +4,7 @@
         xmlns:blazor="clr-namespace:Microsoft.AspNetCore.Components.WebView.Wpf;assembly=Microsoft.AspNetCore.Components.WebView.Wpf"
         xmlns:k="clr-namespace:Evidencija.Komponente"
         Title="Lovačka Evidencija" Width="1200" Height="800" MinWidth="800" MinHeight="560"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen" Icon="evidencija.ico">
     <blazor:BlazorWebView x:Name="Preglednik" HostPage="wwwroot\index.html">
         <blazor:BlazorWebView.RootComponents>
             <blazor:RootComponent Selector="#app" ComponentType="{x:Type k:Korijen}" />

@@ -9,12 +9,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Evidencija</RootNamespace>
     <AssemblyName>Evidencija</AssemblyName>
-    <Version>0.5.0</Version>
+    <Version>1.0.0</Version>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>Lovačka Evidencija za Windows</Product>
+    <Company>Lovačka Evidencija (besplatno, AGPL-3.0)</Company>
+    <ApplicationIcon>evidencija.ico</ApplicationIcon>
     <!-- Jedan program bez dodatne instalacije .NET-a -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- bez prijevoda biblioteka na druge jezike (manja instalacija) -->
+    <SatelliteResourceLanguages>hr;en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,6 +33,10 @@
   <ItemGroup>
     <!-- WPF ne uključuje System.IO automatski -->
     <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="evidencija.ico" />
   </ItemGroup>
 
   <ItemGroup>

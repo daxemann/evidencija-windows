@@ -1,0 +1,80 @@
+@page "/upute"
+
+<h1 class="h3 mb-3">📖 Upute za korištenje</h1>
+
+<div class="row g-4" style="max-width:1100px">
+    <div class="col-lg-6">
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h5">🔑 Lozinka i rezervna lozinka</h2>
+            <ul class="mb-0">
+                <li><b>Lozinka</b> otvara program svaki dan.</li>
+                <li><b>Rezervna lozinka</b> je zapisana i čuva se na sigurnom (npr. u kuverti kod predsjednika).</li>
+                <li>Zaboravili ste lozinku? Na prijavi kliknite <b>„Zaboravili ste lozinku?“</b>, upišite rezervnu i postavite novu.</li>
+                <li><b>Bez obje lozinke podaci se ne mogu otvoriti</b> – ni mi ih ne možemo vratiti. To je namjerno: tko ukrade računalo, ne može čitati podatke članova.</li>
+                <li>Promjena lozinke: <a href="postavke/lozinka">🔑 Lozinka</a>. Nakon promjene rezervne lozinke zamijenite papir u kuverti.</li>
+                <li>Kad odlazite od računala: <b>🔒 Zaključaj</b> (gore desno).</li>
+            </ul>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h5">💾 Sigurnosne kopije</h2>
+            <ul class="mb-0">
+                <li>U <a href="postavke/kopije">💾 Sigurnosne kopije</a> odaberite mapu – najbolje USB stick ili mapu OneDrive / Google Drive.</li>
+                <li>Pri svakom zatvaranju programa (ako je bilo promjena) sprema se nova kopija. Čuva se zadnjih 10.</li>
+                <li>Kopija je šifrirana – otvara se samo lozinkom ili rezervnom lozinkom.</li>
+                <li><b>Novo računalo:</b> instalirajte program, na prvom pokretanju kliknite <b>„↩️ Vrati iz kopije“</b>, odaberite zadnju kopiju i upišite lozinku.</li>
+            </ul>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h5">📥 Prvi unos članova</h2>
+            <ul class="mb-0">
+                <li>Imate popis u Excelu? <a href="uvoz">📥 Uvoz članova</a>: odaberite datoteku, provjerite stupce, pogledajte pregled, kliknite <b>Uvezi</b>.</li>
+                <li>Program prije uvoza sam napravi kopiju. Ako nešto nije dobro, vratite tu kopiju.</li>
+                <li>Pojedinačno: <a href="clanovi">👥 Članovi</a> → <b>➕ Novi član</b>.</li>
+                <li>Sekcije (ako ih imate) upišite u <a href="postavke/sekcije">🏷️ Sekcije</a> – samo za informaciju i filtar.</li>
+            </ul>
+        </div></div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h5">💶 Članarina</h2>
+            <ol class="mb-0">
+                <li><a href="postavke/udruga">🏛️ Udruga i uplatnica</a>: naziv, adresa i <b>IBAN</b> udruge (za uplatnice).</li>
+                <li><a href="postavke/clanarina">💶 Iznosi članarine</a>: iznos za godinu, rok i broj rata. Po želji vrste članstva (npr. umirovljenik). Iznos 0 = oslobođeni.</li>
+                <li><a href="clanarina">💶 Članarina</a> → <b>„Zaduži sve prema iznosima“</b>.</li>
+                <li>Uplate: klik na člana → upišite datum i iznos. Uplate se raspoređuju na rate redom.</li>
+                <li>Uplatnice HUB-3A (s 2D kodom za mobilno bankarstvo) kao PDF – za jednog člana ili za sve prikazane.</li>
+            </ol>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h5">🔨 Bodovi</h2>
+            <ul class="mb-0">
+                <li><a href="postavke/bodovi">🔨 Bodovi i oprema</a>: vrste akcija s bodovima (Košnja = 5) i dodaci (Traktor +5, Motorna pila +2), početak bodovne godine, obveza.</li>
+                <li><a href="bodovi/upis">➕ Upis bodova</a>: član → vrsta → kvačice za dodatke. Program predloži zbroj, broj se smije promijeniti (i minus).</li>
+                <li><b>„Spremi i novi upis“</b> – isti datum i vrsta za sljedećeg člana.</li>
+                <li>Nova godina: <a href="bodovi">🔨 Bodovi</a> → <b>↪️ Prijenos</b> – preneseno se vodi kao <span class="text-danger">staro</span>.</li>
+            </ul>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h5">📄 PDF i ispis</h2>
+            <ul class="mb-0">
+                <li>Popisi (članovi, imenik, članarina, bodovi) izrađuju se kao PDF tek nakon ponovnog upisa lozinke – zaštita osobnih podataka.</li>
+                <li>PDF spremite gdje želite i ispišite. Pazite gdje ga ostavljate – PDF nije šifriran.</li>
+            </ul>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h5">ℹ️ Važno znati</h2>
+            <ul class="mb-0">
+                <li>Program radi <b>bez interneta</b> i ništa ne šalje van.</li>
+                <li>Ovo je <b>evidencija</b> udruge, ne službeno knjigovodstvo – za porez i završni račun i dalje vrijedi vaš knjigovodstveni servis.</li>
+                <li>Novu verziju instalirate preko stare – podaci ostaju.</li>
+                <li>Deinstalacija ne briše podatke (mapa <code>%LOCALAPPDATA%\LovackaEvidencija</code>).</li>
+            </ul>
+        </div></div>
+    </div>
+</div>

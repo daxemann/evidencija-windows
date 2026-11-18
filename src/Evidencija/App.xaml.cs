@@ -9,8 +9,19 @@ public partial class App : Application
 {
     public static IServiceProvider Usluge { get; private set; } = null!;
 
+    /// <summary>Samo jedan pokrenut program – dva bi istovremeno pisala u istu bazu i kopije.</summary>
+    private static Mutex? _jedanProgram;
+
     protected override void OnStartup(StartupEventArgs e)
     {
+        _jedanProgram = new Mutex(true, @"Local\LovackaEvidencijaWindows", out var prvi);
+        if (!prvi)
+        {
+            MessageBox.Show("Lovačka Evidencija je već otvorena.", "Lovačka Evidencija", MessageBoxButton.OK, MessageBoxImage.Information);
+            Shutdown();
+            return;
+        }
+
 #if DEBUG
         // samo za testiranje: podaci u zasebnoj mapi, nikad u izdanju
         var mape = new Mape(Environment.GetEnvironmentVariable("EVIDENCIJA_TEST_MAPA"));

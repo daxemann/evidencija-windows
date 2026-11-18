@@ -3,9 +3,12 @@ obj/
 .vs/
 *.user
 izlaz/
-# nikad podaci ni ključevi
+# nikad podaci ni kljuÄevi
 *.db
 *.db-wal
 *.db-shm
 kljucevi.json
 .claude/
+
+# Microsoftov WebView2 bootstrapper - preuzima se, ne ide u repozitorij
+instalacija/MicrosoftEdgeWebview2Setup.exe
