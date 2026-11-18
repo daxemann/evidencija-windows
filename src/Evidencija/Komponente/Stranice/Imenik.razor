@@ -1,11 +1,13 @@
 @page "/imenik"
+@using Evidencija.Pomoc
 @inject ClanoviServis Servis
 @inject SekcijeServis Sekcije
 
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <h1 class="h3 mb-0 me-auto">📒 Imenik</h1>
-    <IspisGumb />
+    <PdfGumb Izradi="IzradiPdf" Spremljeno="p => _pdf = p" />
 </div>
+@if (_pdf != null){<div class="alert alert-success py-2 small no-print">📄 PDF spremljen: @_pdf</div>}
 
 <ClanFilter Upit="@_upit" SekcijaId="@_sekcijaId" Promjena="Filtriraj" />
 
@@ -30,6 +32,15 @@
 <p class="small text-muted">@_prikaz.Count aktivnih članova</p>
 
 @code {
+    [Inject] private UdrugaServis UdrugaZaPdf { get; set; } = null!;
+    private string? _pdf;
+    private string NazivUdruge => UdrugaZaPdf.Ucitaj().Naziv is { Length: > 0 } n ? n : "Lovačka udruga";
+    private string? IzradiPdf() => Evidencija.Pomoc.PdfIzvoz.SpremiIOtvori(PdfPopis.Tablica(NazivUdruge, "Imenik",
+        $"Aktivni članovi · {_prikaz.Count}",
+        [new("Prezime i ime", 3), new("Nadimak", 1.5f), new("Mobitel", 2), new("Fiksni", 2), new("Mjesto", 2), new("Sekcija", 2)],
+        _prikaz.Select(c => new[] { c.PrezimeIme, c.Nadimak ?? "", c.MobilniTelefon ?? "", c.FiksniTelefon ?? "", c.Mjesto ?? "",
+            c.SekcijaId != null && _sekcije.TryGetValue(c.SekcijaId, out var n) ? n : "" })),
+        "Imenik.pdf");
     private List<Clan> _svi = [], _prikaz = [];
     private Dictionary<string, string> _sekcije = [];
     private string? _upit, _sekcijaId;

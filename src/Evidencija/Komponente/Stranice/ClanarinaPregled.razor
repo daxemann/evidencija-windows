@@ -9,8 +9,9 @@
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <h1 class="h3 mb-0 me-auto">💶 Članarina</h1>
     <GodinaBirac Godina="_godina" GodinaChanged="PromijeniGodinu" />
-    <IspisGumb />
+    <PdfGumb Izradi="IzradiPdf" Spremljeno="p => _pdf = p" />
 </div>
+@if (_pdf != null){<div class="alert alert-success py-2 small no-print">📄 PDF spremljen: @_pdf</div>}
 
 @if (_iznosi.Count == 0)
 {
@@ -42,7 +43,7 @@ else if (_nezaduzenih > 0)
     </select>
     @if (UdrugaServis.UplatnicaSpremna(_udruga) && _redovi.Any(r => r.C?.Preostalo > 0))
     {
-        <button class="btn btn-outline-primary no-print" @onclick="UplatnicePdf">🧾 Uplatnice (PDF) za prikazane</button>
+        <PdfGumb Natpis="🧾 Uplatnice (PDF) za prikazane" Izradi="UplatnicePdf" Spremljeno="p => _pdf = p" />
     }
 </div>
 <Poruka Tekst="@_poruka" Vrsta="info" />
@@ -68,6 +69,22 @@ else if (_nezaduzenih > 0)
 <p class="small text-muted">Prikazano: @_redovi.Count</p>
 
 @code {
+    [Inject] private UdrugaServis UdrugaZaPdf { get; set; } = null!;
+    private string? _pdf;
+    private string NazivUdruge => UdrugaZaPdf.Ucitaj().Naziv is { Length: > 0 } n ? n : "Lovačka udruga";
+    private string? IzradiPdf() => Evidencija.Pomoc.PdfIzvoz.SpremiIOtvori(PdfPopis.Tablica(NazivUdruge, $"Članarina {_godina}.",
+        $"{(_prikaz == "duguju" ? "Dužnici" : _prikaz == "dospjelo" ? "Dospjelo" : _prikaz == "placeno" ? "Plaćeno" : _prikaz == "nezaduzeni" ? "Nisu zaduženi" : "Svi")} · {_redovi.Count}",
+        [new("Član", 3), new("Zaduženo", 1.5f, true), new("Uplaćeno", 1.5f, true), new("Preostalo", 1.5f, true), new("Status", 1.5f)],
+        _redovi.Select(r => new[] { r.Clan.PrezimeIme, r.C == null ? "" : Novac.Prikaz(r.C.Iznos), r.C == null ? "" : Novac.Prikaz(r.C.Uplaceno),
+            r.C == null ? "" : Novac.Prikaz(r.C.Preostalo), StatusTekst(r.C?.Status ?? StatusClanarine.NemaZaduzenja) }),
+        $"Ukupno preostalo: {Novac.Prikaz(_redovi.Sum(r => r.C?.Preostalo ?? 0))}"),
+        $"Clanarina {_godina}.pdf");
+
+    private static string StatusTekst(StatusClanarine s) => s switch
+    {
+        StatusClanarine.Placeno => "plaćeno", StatusClanarine.Djelomicno => "djelomično", StatusClanarine.Dospjelo => "dospjelo",
+        StatusClanarine.Otvoreno => "otvoreno", _ => "nije zadužen",
+    };
     private sealed record RedPregleda(Clan Clan, Clanarina? C);
 
     private int _godina = DateTime.Today.Year;
@@ -139,11 +156,10 @@ else if (_nezaduzenih > 0)
         Ucitaj();
     }
 
-    private void UplatnicePdf()
+    private string? UplatnicePdf()
     {
         var uplatnice = _redovi.Where(r => r.C?.Preostalo > 0)
             .SelectMany(r => Uplatnice.ZaClana(r.Clan, r.C!, _udruga)).ToList();
-        var put = PdfIzvoz.SpremiIOtvori(Uplatnice.Pdf(uplatnice), $"Uplatnice clanarina {_godina}.pdf");
-        _poruka = put == null ? null : $"Spremljeno: {put} ({uplatnice.Count} uplatnica).";
+        return PdfIzvoz.SpremiIOtvori(Uplatnice.Pdf(uplatnice), $"Uplatnice clanarina {_godina}.pdf");
     }
 }

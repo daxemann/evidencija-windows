@@ -1,5 +1,6 @@
 @* Prvo postavljanje, prijava i „Zaboravili ste lozinku?“ *@
 @inject Sjednica Sjednica
+@inject KopijeServis Kopije
 
 <div class="ulaz-okvir px-3">
     <div class="text-center mb-4">
@@ -8,7 +9,25 @@
         <div class="text-muted small">za Windows · bez interneta</div>
     </div>
 
-    @if (Sjednica.PrvoPokretanje)
+    @if (Sjednica.PrvoPokretanje && _vracanje)
+    {
+        <div class="card shadow-sm"><div class="card-body">
+            <h1 class="h5">↩️ Vrati iz sigurnosne kopije</h1>
+            <p class="small text-muted">Npr. na novom računalu: odaberite kopiju (.evk) s USB-a ili iz oblaka i upišite lozinku ili rezervnu lozinku.</p>
+            <button type="button" class="btn btn-outline-secondary w-100 mb-2" @onclick="OdaberiKopiju">📁 Odaberi kopiju</button>
+            @if (_kopija != null)
+            {
+                <div class="small text-truncate mb-2">📄 @Path.GetFileName(_kopija)</div>
+                <form @onsubmit="VratiKopiju" @onsubmit:preventDefault>
+                    <input type="password" class="form-control mb-3" @bind="_lozinka" placeholder="Lozinka ili rezervna lozinka" autocomplete="off" />
+                    <Poruka Tekst="@_greska" />
+                    <button class="btn btn-primary w-100" disabled="@_radi">@(_radi ? "Pričekajte…" : "Vrati i otvori")</button>
+                </form>
+            }
+            <button class="btn btn-link px-0 mt-2" @onclick="() => { _vracanje = false; _greska = null; }">← Novo postavljanje</button>
+        </div></div>
+    }
+    else if (Sjednica.PrvoPokretanje)
     {
         <div class="card shadow-sm"><div class="card-body">
             <h1 class="h5">Prvo pokretanje</h1>
@@ -33,6 +52,7 @@
                 <Poruka Tekst="@_greska" />
                 <button class="btn btn-primary w-100" disabled="@(_radi || !_zapisao)">@(_radi ? "Pričekajte…" : "Spremi i otvori")</button>
             </form>
+            <button class="btn btn-link px-0 mt-2" @onclick="() => { _vracanje = true; _greska = null; }">Imate kopiju s drugog računala? ↩️ Vrati iz kopije</button>
         </div></div>
     }
     else if (_zaboravljena)
@@ -66,7 +86,8 @@
 
 @code {
     private string _lozinka = "", _lozinka2 = "", _rezervna = "", _rezervna2 = "";
-    private bool _zapisao, _radi, _zaboravljena;
+    private bool _zapisao, _radi, _zaboravljena, _vracanje;
+    private string? _kopija;
     private string? _greska;
 
     private async Task Postavi()
@@ -111,6 +132,18 @@
         StateHasChanged();
         try { await Task.Run(posao); }
         finally { _radi = false; }
+    }
+
+    private void OdaberiKopiju()
+    {
+        if (Evidencija.Pomoc.Dijalozi.Datoteka("Odaberi sigurnosnu kopiju", "Kopija Evidencije (*.evk)|*.evk") is { } f) _kopija = f;
+    }
+
+    private async Task VratiKopiju()
+    {
+        string? greska = null;
+        await Radi(() => greska = Kopije.Vrati(_kopija!, _lozinka));
+        _greska = greska;
     }
 
     private void Prebaci(bool zaboravljena)

@@ -1,4 +1,0 @@
-@* Ispis trenutne stranice (pisač ili „Microsoft Print to PDF“) *@
-@inject IJSRuntime Js
-
-<button type="button" class="btn btn-outline-secondary no-print" @onclick='() => Js.InvokeVoidAsync("print").AsTask()'>🖨️ Ispis</button>

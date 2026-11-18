@@ -18,6 +18,14 @@
     </div>
 </div>
 
+@if (_bezKopija)
+{
+    <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2">
+        <span class="me-auto">💾 <b>Sigurnosne kopije nisu uključene.</b> Ako se računalo pokvari, podaci su izgubljeni.</span>
+        <a class="btn btn-sm btn-danger" href="postavke/kopije">Uključi kopije</a>
+    </div>
+}
+
 @if (_iskaznice.Count > 0)
 {
     <div class="card border-warning mb-3"><div class="card-body">
@@ -38,11 +46,14 @@
 }
 
 @code {
+    [Inject] private KopijeServis Kopije { get; set; } = null!;
+    private bool _bezKopija;
     private int _aktivnih;
     private List<Clan> _iskaznice = [];
 
     protected override void OnInitialized()
     {
+        _bezKopija = Kopije.Mapa == null;
         var danas = DateOnly.FromDateTime(DateTime.Today);
         var aktivni = Clanovi.Svi().Where(c => c.Status == Clan.Aktivan).ToList();
         _aktivnih = aktivni.Count;

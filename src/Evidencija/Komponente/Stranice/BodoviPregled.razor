@@ -8,9 +8,10 @@
     <h1 class="h3 mb-0 me-auto">🔨 Bodovi @BodoviServis.NazivGodine(_godina, _p.Pocetak)</h1>
     <GodinaBirac Godina="_godina" GodinaChanged="PromijeniGodinu" />
     <a class="btn btn-outline-secondary no-print" href="bodovi/prijenos?g=@_godina">↪️ Prijenos</a>
-    <IspisGumb />
+    <PdfGumb Izradi="IzradiPdf" Spremljeno="p => _pdf = p" />
     <a class="btn btn-primary no-print" href="bodovi/upis">➕ Upis bodova</a>
 </div>
+@if (_pdf != null){<div class="alert alert-success py-2 small no-print">📄 PDF spremljen: @_pdf</div>}
 <p class="small text-muted">
     Bodovna godina @Tekst.Datum(_raspon.Od) – @Tekst.Datum(_raspon.Do)
     @if (_p.Minimum > 0){<span> · obveza najmanje <b>@Tekst.Bodovi(_p.Minimum)</b> bodova</span>}
@@ -50,6 +51,15 @@
 <p class="small text-muted">Prikazano: @_redovi.Count · Ukupno bodova: @Tekst.Bodovi(_redovi.Sum(r => r.S.Ukupno))</p>
 
 @code {
+    [Inject] private UdrugaServis UdrugaZaPdf { get; set; } = null!;
+    private string? _pdf;
+    private string NazivUdruge => UdrugaZaPdf.Ucitaj().Naziv is { Length: > 0 } n ? n : "Lovačka udruga";
+    private string? IzradiPdf() => Evidencija.Pomoc.PdfIzvoz.SpremiIOtvori(PdfPopis.Tablica(NazivUdruge, $"Bodovi {BodoviServis.NazivGodine(_godina, _p.Pocetak)}",
+        $"Bodovna godina {Tekst.Datum(_raspon.Od)} – {Tekst.Datum(_raspon.Do)}{(_p.Minimum > 0 ? $" · obveza {Tekst.Bodovi(_p.Minimum)}" : "")} · {_redovi.Count}",
+        [new("Član", 3), new("Staro", 1, true), new("Novo", 1, true), new("Ukupno", 1, true), new("Nedostaje", 1, true)],
+        _redovi.Select(r => new[] { r.C.PrezimeIme, Tekst.Bodovi(r.S.Staro), Tekst.Bodovi(r.S.Novo), Tekst.Bodovi(r.S.Ukupno),
+            _p.Minimum > 0 && r.S.Ukupno < _p.Minimum ? Tekst.Bodovi(_p.Minimum - r.S.Ukupno) : "" })),
+        $"Bodovi {_godina}.pdf");
     private PostavkeBodova _p = new();
     private int _godina;
     private (string Od, string Do) _raspon;

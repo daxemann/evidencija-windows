@@ -9,6 +9,11 @@ public static class PdfIzvoz
     /// <returns>Putanja spremljene datoteke ili null ako je korisnik odustao.</returns>
     public static string? SpremiIOtvori(byte[] pdf, string predlozenoIme)
     {
+        if (Dijalozi.TestniOdgovor() is { } test) // samo Debug: bez dijaloga i bez otvaranja
+        {
+            File.WriteAllBytes(test, pdf);
+            return test;
+        }
         var dijalog = new Microsoft.Win32.SaveFileDialog
         {
             Title = "Spremi PDF",

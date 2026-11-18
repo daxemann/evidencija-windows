@@ -22,6 +22,21 @@ public partial class MainWindow : Window
                 e.UrlLoadingStrategy = UrlLoadingStrategy.CancelLoad;
             }
         };
+        Closing += (_, _) => KopijaPriZatvaranju();
         Closed += (_, _) => App.Usluge.GetRequiredService<Sjednica>().Zakljucaj();
+    }
+
+    /// <summary>Pri zatvaranju šifrirana kopija (ako je mapa postavljena i bilo je promjena). Nikad ne sprječava zatvaranje.</summary>
+    private static void KopijaPriZatvaranju()
+    {
+        if (!App.Usluge.GetRequiredService<Sjednica>().Otkljucano) return;
+        var ishod = App.Usluge.GetRequiredService<Evidencija.Podaci.KopijeServis>().Automatska();
+        var poruka = ishod switch
+        {
+            Evidencija.Podaci.IshodKopije.MapaNedostupna => "Mapa za sigurnosne kopije nije dostupna (je li USB utaknut?).\nKopija ovaj put NIJE spremljena.",
+            Evidencija.Podaci.IshodKopije.Greska => "Sigurnosna kopija nije spremljena (greška pri pisanju).\nProvjerite mapu u Postavke → Sigurnosne kopije.",
+            _ => null,
+        };
+        if (poruka != null) MessageBox.Show(poruka, "Lovačka Evidencija", MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 }

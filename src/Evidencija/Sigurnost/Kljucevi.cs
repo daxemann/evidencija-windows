@@ -34,9 +34,12 @@ public sealed class Kljucevi
     }
 
     /// <summary>Otključava ključ lozinkom određene vrste; kriva lozinka → null.</summary>
-    public byte[]? Otkljucaj(string vrsta, string lozinka)
+    public byte[]? Otkljucaj(string vrsta, string lozinka) => OtkljucajIz(SadrzajDatoteke(), vrsta, lozinka);
+
+    /// <summary>Otključavanje iz sadržaja kljucevi.json (npr. iz sigurnosne kopije).</summary>
+    public static byte[]? OtkljucajIz(string json, string vrsta, string lozinka)
     {
-        var omot = Ucitaj().Omoti.FirstOrDefault(o => o.Vrsta == vrsta);
+        var omot = (JsonSerializer.Deserialize<DatotekaKljuceva>(json) ?? new()).Omoti.FirstOrDefault(o => o.Vrsta == vrsta);
         if (omot == null)
         {
             return null;

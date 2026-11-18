@@ -1,0 +1,38 @@
+@* PDF popisa s osobnim podacima – samo nakon ponovnog upisa lozinke (sigurnosno pravilo za izvoz). *@
+@inject Sjednica Sjednica
+
+@if (!_pitaj)
+{
+    <button type="button" class="btn btn-outline-secondary no-print" @onclick="() => { _pitaj = true; _greska = null; }">@Natpis</button>
+}
+else
+{
+    <form class="d-flex gap-1 no-print" @onsubmit="Potvrdi" @onsubmit:preventDefault>
+        <input type="password" class="form-control form-control-sm" style="width:170px" placeholder="Lozinka za PDF" @bind="_lozinka" autofocus />
+        <button class="btn btn-sm btn-primary" disabled="@_radi">@(_radi ? "…" : "📄 Izradi")</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => { _pitaj = false; _lozinka = null; }">✕</button>
+    </form>
+    @if (_greska != null) {<div class="small text-danger w-100 text-end">@_greska</div>}
+}
+
+@code {
+    /// <summary>Izrađuje i sprema PDF (poziva se tek nakon točne lozinke). Vraća putanju ili null.</summary>
+    [Parameter, EditorRequired] public Func<string?> Izradi { get; set; } = null!;
+    [Parameter] public EventCallback<string?> Spremljeno { get; set; }
+    [Parameter] public string Natpis { get; set; } = "📄 PDF";
+
+    private bool _pitaj, _radi;
+    private string? _lozinka, _greska;
+
+    private async Task Potvrdi()
+    {
+        _radi = true;
+        var lozinka = _lozinka ?? "";
+        var ok = await Task.Run(() => Sjednica.ProvjeriLozinku(Kljucevi.Lozinka, lozinka));
+        _radi = false;
+        _lozinka = null;
+        if (!ok) { _greska = "Lozinka nije točna."; return; }
+        _pitaj = false;
+        await Spremljeno.InvokeAsync(Izradi());
+    }
+}

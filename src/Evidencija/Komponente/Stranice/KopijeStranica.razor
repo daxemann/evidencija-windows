@@ -1,0 +1,135 @@
+@page "/postavke/kopije"
+@inject KopijeServis Kopije
+@using Evidencija.Pomoc
+
+<h1 class="h3 mb-1">💾 Sigurnosne kopije</h1>
+<p class="text-muted small mb-3">Pri svakom zatvaranju programa (ako je bilo promjena) sprema se šifrirana kopija u odabranu mapu.
+    Kopija se otvara samo lozinkom ili rezervnom lozinkom – smije biti na USB-u ili u oblaku (OneDrive, Google Drive).</p>
+
+<div class="row g-4">
+    <div class="col-xl-6">
+        <div class="card"><div class="card-body">
+            <h2 class="h6">Mapa za kopije</h2>
+            <div class="input-group mb-2">
+                <span class="form-control bg-body-tertiary text-truncate">@(_mapa ?? "— nije odabrana —")</span>
+                <button class="btn btn-outline-secondary" @onclick="OdaberiMapu">📁 Odaberi</button>
+            </div>
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <label class="form-label mb-0">Zadrži zadnjih</label>
+                <input type="number" min="1" max="100" class="form-control" style="width:90px" @bind="_zadrzi" />
+                <span>kopija</span>
+                <button class="btn btn-primary btn-sm ms-auto" @onclick="Spremi">💾 Spremi</button>
+            </div>
+            @if (_mapa != null && !Directory.Exists(_mapa))
+            {
+                <div class="alert alert-warning py-2 small">Mapa trenutno nije dostupna (npr. USB nije utaknut). Kopija se neće spremiti dok ne bude dostupna.</div>
+            }
+            <p class="small mb-2">Zadnja kopija: <b>@(Kopije.Zadnja is { } z ? DateTime.Parse(z).ToString("d.M.yyyy. HH:mm") : "još nijedna")</b></p>
+            <button class="btn btn-outline-primary" @onclick="SadaKopija" disabled="@(_mapa == null)">💾 Napravi kopiju sada</button>
+            <Poruka Tekst="@_poruka" Vrsta="success" />
+            <Poruka Tekst="@_greska" />
+        </div></div>
+    </div>
+
+    <div class="col-xl-6">
+        <div class="card"><div class="card-body">
+            <h2 class="h6">Vrati iz kopije</h2>
+            <p class="small text-muted">Svi trenutni podaci zamijenit će se podacima iz kopije (trenutno stanje se prije toga sprema sa strane).
+                Nakon vraćanja vrijede lozinke iz vremena kopije.</p>
+            @if (_popis.Count > 0)
+            {
+                <select class="form-select mb-2" @bind="_odabrana">
+                    @foreach (var f in _popis)
+                    {
+                        <option value="@f.FullName">@f.LastWriteTime.ToString("d.M.yyyy. HH:mm") · @(f.Length / 1024) kB</option>
+                    }
+                </select>
+            }
+            <button class="btn btn-link btn-sm px-0 mb-2" @onclick="DrugaDatoteka">… ili odaberi drugu datoteku (.evk)</button>
+            @if (_odabrana != null)
+            {
+                <div class="small text-truncate mb-2">📄 @Path.GetFileName(_odabrana)</div>
+                <input type="password" class="form-control mb-2" @bind="_lozinka" placeholder="Lozinka ili rezervna lozinka iz vremena kopije" />
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="potvrda" @bind="_potvrda" />
+                    <label class="form-check-label" for="potvrda">Razumijem: trenutni podaci zamjenjuju se kopijom.</label>
+                </div>
+                <button class="btn btn-danger" disabled="@(!_potvrda || _radi)" @onclick="Vrati">@(_radi ? "Pričekajte…" : "↩️ Vrati kopiju")</button>
+            }
+            <Poruka Tekst="@_greskaVracanja" />
+        </div></div>
+    </div>
+</div>
+
+@code {
+    private string? _mapa, _poruka, _greska, _odabrana, _lozinka, _greskaVracanja;
+    private int _zadrzi;
+    private bool _potvrda, _radi;
+    private List<FileInfo> _popis = [];
+
+    [Inject] private NavigationManager Nav { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        _mapa = Kopije.Mapa;
+        _zadrzi = Kopije.Zadrzi;
+        Osvjezi();
+    }
+
+    private void Osvjezi()
+    {
+        _popis = _mapa == null ? [] : KopijeServis.Popis(_mapa);
+        _odabrana = _popis.FirstOrDefault()?.FullName;
+    }
+
+    private void OdaberiMapu()
+    {
+        if (Dijalozi.Mapa("Mapa za sigurnosne kopije", _mapa) is { } m)
+        {
+            _mapa = m;
+            Spremi();
+        }
+    }
+
+    private void Spremi()
+    {
+        Kopije.PostaviMapu(_mapa, _zadrzi);
+        _zadrzi = Kopije.Zadrzi;
+        _poruka = "Spremljeno.";
+        _greska = null;
+        Osvjezi();
+    }
+
+    private void SadaKopija()
+    {
+        _poruka = _greska = null;
+        if (_mapa == null || !Directory.Exists(_mapa)) { _greska = "Mapa nije dostupna."; return; }
+        try
+        {
+            var put = Kopije.Napravi(_mapa);
+            _poruka = "Kopija spremljena: " + Path.GetFileName(put);
+            Osvjezi();
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            _greska = "Kopija nije spremljena: " + e.Message;
+        }
+    }
+
+    private void DrugaDatoteka()
+    {
+        if (Dijalozi.Datoteka("Odaberi sigurnosnu kopiju", "Kopija Evidencije (*.evk)|*.evk", _mapa) is { } f) _odabrana = f;
+    }
+
+    private async Task Vrati()
+    {
+        _greskaVracanja = null;
+        _radi = true;
+        StateHasChanged();
+        await Task.Yield();
+        var greska = Kopije.Vrati(_odabrana!, _lozinka ?? "");
+        _radi = false;
+        if (greska != null) { _greskaVracanja = greska; return; }
+        Nav.NavigateTo("", forceLoad: false);
+    }
+}

@@ -1,0 +1,170 @@
+@page "/uvoz"
+@inject UvozServis Uvoz
+@inject KopijeServis Kopije
+@inject Mape Mape
+@using Evidencija.Pomoc
+
+<h1 class="h3 mb-1">📥 Uvoz članova (Excel / CSV)</h1>
+<p class="text-muted small mb-3">Datoteka se samo čita – ništa ne napušta računalo. Prije uvoza program sam napravi sigurnosnu kopiju.</p>
+
+@if (_rezultat != null)
+{
+    <div class="alert alert-success">
+        ✅ Uvoz gotov: <b>@_rezultat.Value.Novih</b> novih, <b>@_rezultat.Value.Dopunjenih</b> dopunjenih, <b>@_rezultat.Value.Preskocenih</b> preskočenih.
+        Kopija prije uvoza: <span class="small">@_kopija</span>
+    </div>
+    <a class="btn btn-primary" href="clanovi">👥 Na članove</a>
+    <button class="btn btn-outline-secondary" @onclick="Ispocetka">📥 Novi uvoz</button>
+    return;
+}
+
+<div class="card mb-3"><div class="card-body">
+    <h2 class="h6">1. Datoteka</h2>
+    <InputFile class="form-control" accept=".xlsx,.csv" OnChange="Ucitaj" />
+    <div class="form-text">Excel (.xlsx) ili CSV. Prvi red mora biti naslov stupca (npr. Ime, Prezime, Mobitel).</div>
+    <Poruka Tekst="@_greska" />
+</div></div>
+
+@if (_zaglavlja.Count > 0)
+{
+    <div class="card mb-3"><div class="card-body">
+        <h2 class="h6">2. Što je u kojem stupcu? <span class="fw-normal text-muted small">(@_redovi.Count redova)</span></h2>
+        <p class="small text-muted">Program je pogodio po naslovu – provjerite i po potrebi promijenite. Ispod svakog stupca su prva tri podatka iz datoteke.</p>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead><tr><th>Stupac u datoteci</th><th>Primjer</th><th style="width:300px">Uvesti kao</th></tr></thead>
+                <tbody>
+                    @for (var i = 0; i < _zaglavlja.Count; i++)
+                    {
+                        var s = i;
+                        <tr class="@(_pridruzivanje[s] == UvozServis.Ignoriraj ? "text-muted" : "")">
+                            <td><b>@_zaglavlja[s]</b></td>
+                            <td class="small">@string.Join(" · ", _redovi.Take(3).Select(r => r[s]).Where(x => x.Length > 0))</td>
+                            <td>
+                                <select class="form-select form-select-sm" value="@_pridruzivanje[s]" @onchange="e => { _pridruzivanje[s] = e.Value?.ToString() ?? string.Empty; _pregled = null; }">
+                                    <option value="">— ne uvozi —</option>
+                                    @foreach (var p in UvozServis.Polja)
+                                    {
+                                        <option value="@p.Kljuc">@p.Naziv</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <Poruka Tekst="@_greskaPridruzivanja" />
+        <button class="btn btn-primary" @onclick="Pregled">3. Pregled ›</button>
+    </div></div>
+}
+
+@if (_pregled != null)
+{
+    var dobri = _pregled.Count(r => !r.Greska && r.Postojeci == null && r.Upozorenja.Count == 0);
+    var upozorenja = _pregled.Count(r => !r.Greska && r.Upozorenja.Count > 0);
+    var duplikati = _pregled.Count(r => !r.Greska && r.Postojeci != null);
+    var greske = _pregled.Count(r => r.Greska);
+    <div class="card mb-3"><div class="card-body">
+        <h2 class="h6">3. Pregled</h2>
+        <p>✅ <b>@dobri</b> u redu · ⚠️ <b>@upozorenja</b> s upozorenjem (uvoze se) · 🔁 <b>@duplikati</b> možda već postoje · ❌ <b>@greske</b> bez imena/prezimena (ne uvoze se)</p>
+        @if (duplikati > 0)
+        {
+            <div class="mb-3">
+                <label class="form-label">Članovi koji možda već postoje (isto ime ili OIB):</label>
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach (var (d, naziv) in new[] { (Duplikat.Preskoci, "preskoči"), (Duplikat.Dopuni, "dopuni prazna polja"), (Duplikat.Novi, "ipak dodaj kao novog") })
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="dup" id="dup-@d" checked="@(_duplikati == d)" @onchange="() => _duplikati = d" />
+                            <label class="form-check-label" for="dup-@d">@naziv</label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        <div class="table-responsive" style="max-height:420px;overflow:auto">
+            <table class="table table-sm align-middle">
+                <thead class="sticky-top bg-body"><tr><th>Red</th><th>Prezime i ime</th><th>Mobitel</th><th>Mjesto</th><th>Napomena</th></tr></thead>
+                <tbody>
+                    @foreach (var r in _pregled.Where(r => r.Greska || r.Postojeci != null || r.Upozorenja.Count > 0).Concat(_pregled.Where(r => !r.Greska && r.Postojeci == null && r.Upozorenja.Count == 0)).Take(300))
+                    {
+                        <tr class="@(r.Greska ? "table-danger" : r.Postojeci != null ? "table-info" : r.Upozorenja.Count > 0 ? "table-warning" : "")">
+                            <td>@r.Broj</td>
+                            <td>@r.Clan.PrezimeIme</td>
+                            <td>@r.Clan.MobilniTelefon</td>
+                            <td>@r.Clan.Mjesto</td>
+                            <td class="small">
+                                @if (r.Greska){<span>❌ nema imena ili prezimena</span>}
+                                @if (r.Postojeci != null){<span>🔁 postoji: @r.Postojeci.PrezimeIme </span>}
+                                @string.Join(", ", r.Upozorenja)
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <button class="btn btn-success mt-2" disabled="@(_radi || dobri + upozorenja + duplikati == 0)" @onclick="Uvezi">@(_radi ? "Pričekajte…" : "📥 Uvezi")</button>
+    </div></div>
+}
+
+@code {
+    private List<string> _zaglavlja = [];
+    private List<string[]> _redovi = [];
+    private string[] _pridruzivanje = [];
+    private List<RedUvoza>? _pregled;
+    private Duplikat _duplikati = Duplikat.Preskoci;
+    private (int Novih, int Dopunjenih, int Preskocenih)? _rezultat;
+    private string? _greska, _greskaPridruzivanja, _kopija;
+    private bool _radi;
+
+    private async Task Ucitaj(InputFileChangeEventArgs e)
+    {
+        Ispocetka();
+        try
+        {
+            using var tok = e.File.OpenReadStream(20 * 1024 * 1024);
+            using var mem = new MemoryStream();
+            await tok.CopyToAsync(mem);
+            (_zaglavlja, _redovi) = UvozServis.Ucitaj(mem.ToArray(), e.File.Name);
+            _pridruzivanje = Uvoz.PredloziPridruzivanje(_zaglavlja);
+        }
+        catch (IOException) { _greska = "Datoteka je prevelika (najviše 20 MB)."; }
+        catch (InvalidDataException ex) { _greska = ex.Message; }
+    }
+
+    private void Pregled()
+    {
+        var odabrano = _pridruzivanje.Where(p => p != UvozServis.Ignoriraj).ToList();
+        var dvaput = odabrano.GroupBy(p => p).FirstOrDefault(g => g.Count() > 1);
+        var imaIme = odabrano.Contains("PrezimeIme") || odabrano.Contains("ImePrezime") || (odabrano.Contains("Ime") && odabrano.Contains("Prezime"));
+        _greskaPridruzivanja = dvaput != null ? $"„{UvozServis.Polja.First(p => p.Kljuc == dvaput.Key).Naziv}“ je odabrano za više stupaca."
+            : !imaIme ? "Odaberite stupce za ime i prezime (ili jedan stupac „Prezime i ime“)." : null;
+        if (_greskaPridruzivanja != null) return;
+        _pregled = Uvoz.Pripremi(_redovi, _pridruzivanje);
+    }
+
+    private async Task Uvezi()
+    {
+        _radi = true;
+        StateHasChanged();
+        await Task.Yield();
+        // sigurnosna kopija prije uvoza: u mapu kopija ako je dostupna, inače u mapu podataka
+        var mapa = Kopije.Mapa is { } m && Directory.Exists(m) ? m : Path.Combine(Mape.Korijen, "prije-uvoza");
+        Directory.CreateDirectory(mapa);
+        _kopija = Kopije.Napravi(mapa);
+        Uvoz.SpremiPredlozak(_zaglavlja, _pridruzivanje);
+        _rezultat = Uvoz.Uvezi(_pregled!, _duplikati);
+        _radi = false;
+    }
+
+    private void Ispocetka()
+    {
+        _zaglavlja = [];
+        _redovi = [];
+        _pridruzivanje = [];
+        _pregled = null;
+        _rezultat = null;
+        _greska = _greskaPridruzivanja = null;
+    }
+}

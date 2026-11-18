@@ -5,9 +5,10 @@
 
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <h1 class="h3 mb-0 me-auto">👥 Članovi</h1>
-    <IspisGumb />
+    <PdfGumb Izradi="IzradiPdf" Spremljeno="p => _pdf = p" />
     <a class="btn btn-primary no-print" href="clanovi/novi">➕ Novi član</a>
 </div>
+@if (_pdf != null){<div class="alert alert-success py-2 small no-print">📄 PDF spremljen: @_pdf</div>}
 
 <ClanFilter Upit="@_upit" SekcijaId="@_sekcijaId" Status="@_status" PrikaziStatus="true" Promjena="Filtriraj" />
 
@@ -43,6 +44,14 @@ else
 }
 
 @code {
+    [Inject] private UdrugaServis UdrugaZaPdf { get; set; } = null!;
+    private string? _pdf;
+    private string NazivUdruge => UdrugaZaPdf.Ucitaj().Naziv is { Length: > 0 } n ? n : "Lovačka udruga";
+    private string? IzradiPdf() => Evidencija.Pomoc.PdfIzvoz.SpremiIOtvori(PdfPopis.Tablica(NazivUdruge, "Popis članova",
+        $"{(_status == Clan.Izasao ? "Izašli članovi" : _status == null ? "Svi članovi" : "Aktivni članovi")}{(_sekcijaId != null ? " · " + NazivSekcije(_sekcijaId) : "")} · {_prikaz.Count}",
+        [new("Prezime i ime", 3), new("Nadimak", 1.5f), new("Sekcija", 2), new("Mobitel", 2), new("Mjesto", 2), new("Iskaznica do", 1.5f)],
+        _prikaz.Select(c => new[] { c.PrezimeIme, c.Nadimak ?? "", NazivSekcije(c.SekcijaId), c.MobilniTelefon ?? "", c.Mjesto ?? "", Tekst.Datum(c.IskaznicaVrijediDo) })),
+        "Popis clanova.pdf");
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
     private List<Clan> _svi = [], _prikaz = [];

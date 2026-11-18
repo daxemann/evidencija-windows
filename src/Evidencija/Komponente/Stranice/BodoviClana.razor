@@ -13,10 +13,11 @@
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <h1 class="h3 mb-0 me-auto">🔨 @_clan.PrezimeIme</h1>
     <GodinaBirac Godina="_godina" GodinaChanged="PromijeniGodinu" />
-    <IspisGumb />
+    <PdfGumb Izradi="IzradiPdf" Spremljeno="p => _pdf = p" />
     <a class="btn btn-primary no-print" href="bodovi/upis?clan=@ClanId">➕ Upis</a>
     <a class="btn btn-outline-secondary no-print" href="bodovi">← Bodovi</a>
 </div>
+@if (_pdf != null){<div class="alert alert-success py-2 small no-print">📄 PDF spremljen: @_pdf</div>}
 
 <div class="row g-3 mb-3" style="max-width:720px">
     <div class="col"><div class="card"><div class="card-body py-2 text-center"><div class="small text-danger">Staro</div><div class="fs-5 fw-semibold text-danger">@Tekst.Bodovi(_s.Staro)</div></div></div></div>
@@ -54,6 +55,15 @@ else
 }
 
 @code {
+    [Inject] private UdrugaServis UdrugaZaPdf { get; set; } = null!;
+    private string? _pdf;
+    private string NazivUdruge => UdrugaZaPdf.Ucitaj().Naziv is { Length: > 0 } n ? n : "Lovačka udruga";
+    private string? IzradiPdf() => Evidencija.Pomoc.PdfIzvoz.SpremiIOtvori(PdfPopis.Tablica(NazivUdruge, $"Bodovi – {_clan!.PrezimeIme}",
+        $"{BodoviServis.NazivGodine(_godina, _p.Pocetak)} · staro {Tekst.Bodovi(_s.Staro)} · novo {Tekst.Bodovi(_s.Novo)} · ukupno {Tekst.Bodovi(_s.Ukupno)}",
+        [new("Datum", 1.2f), new("Vrsta / opis", 4), new("Dodaci", 2.5f), new("Bodovi", 1, true)],
+        _upisi.Select(a => new[] { Tekst.Datum(a.Datum), string.Join(" – ", new[] { a.VrstaNaziv, a.Opis }.Where(x => !string.IsNullOrEmpty(x))),
+            string.Join(", ", a.Oprema.Select(d => $"{d.N} +{Tekst.Bodovi(d.B)}")), Tekst.Bodovi(a.Bodovi) })),
+        $"Bodovi {_clan.PrezimeIme} {_godina}.pdf");
     [Parameter] public string ClanId { get; set; } = "";
     [SupplyParameterFromQuery(Name = "g")] public int? GodinaIzUpita { get; set; }
 

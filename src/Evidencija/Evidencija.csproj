@@ -9,7 +9,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Evidencija</RootNamespace>
     <AssemblyName>Evidencija</AssemblyName>
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
     <Product>Lovačka Evidencija za Windows</Product>
     <!-- Jedan program bez dodatne instalacije .NET-a -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -18,6 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="10.0.*" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.*" />
     <PackageReference Include="QuestPDF" Version="2026.9.2" />

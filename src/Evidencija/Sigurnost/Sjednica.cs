@@ -50,6 +50,9 @@ public sealed class Sjednica
         return true;
     }
 
+    /// <summary>Nakon vraćanja kopije: ključ je već provjeren lozinkom kopije.</summary>
+    public void OtvoriKljucem(byte[] kljuc) => Otvori(kljuc);
+
     public void PromijeniLozinku(string vrsta, string nova) => _kljucevi.Promijeni(Kljuc, vrsta, nova);
 
     /// <summary>Provjera trenutne lozinke bez promjene stanja (npr. prije promjene lozinke).</summary>
