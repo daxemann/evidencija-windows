@@ -1,0 +1,65 @@
+R.br.;Prezime i ime;Nadimak;Adresa;Mjesto;Mob.;Tel. fiksni;E-mail;OIB;Datum roðenja;Br. lovaèke iskaznice;Iskaznica vrijedi do;Èlan od;Sekcija;Kategorija;Napomena
+1;Vukoviæ Tomislav;Mali;Braæe Radiæ 44;Grabovnica;097 000 0001;;;;3.11.2004.;LI-100037;01.03.2029;1995;Sekcija Grabovnica;Mladi;
+2;Mariæ Nikola;;Kolodvorska 97;Lipovo Polje;+385 98 0000002;;;;15.02.1975;LI-100074;26.05.2029;2015;Sekcija Hrastovac;Redovni;
+3;Juriæ Ivan;Medo;Matije Gupca 32a;33411 Jasenovo Selo;091/0000003;;ivan.juric3@primjer.invalid;;1.2.1953.;LI-100111;19.05.2029;1991;Sekcija Brezik;Umirovljenik;
+4;Paviæ Hrvoje;Švabo;Ribnjaèka 94;Lipovo Polje;0910000004;;;;28.02.1977;LI-100148;29.01.2029;1986;Sekcija Hrastovac;Redovni;
+5;Kneževiæ Hrvoje;;Zrinska 106;Grabovnica;096 000 0005;033 000 005;;;9.9.1951.;LI-100185;17.05.2028;1984;Sekcija Grabovnica;Umirovljenik;
+6;Tomiæ Branimir;;Vinogradska 73;33410 Brezik;+385 98 0000006;;branimir.tomic6@primjer.invalid;;23.05.1947;LI-100222;03.04.2028;1989;Sekcija Brezik;Umirovljenik;
+7;Radiæ Dominik;Ðuro;Ribnjaèka 98;Grabovnica;097/0000007;;;;9.12.1954.;LI-100259;24.11.2026;1993;Sekcija Grabovnica;Umirovljenik;
+8;Babiæ Dominik;Lisac;Trg slobode 62;Lipovo Polje;0980000008;;;;10.05.1998;LI-100296;12.06.2028;1976;Sekcija Hrastovac;Umirovljenik;
+9;Markoviæ Hrvoje;;Zrinska 65;33410 Brezik;096 000 0009;;hrvoje.markovic9@primjer.invalid;;11.1.1983.;LI-100333;17.08.2026;2010;Sekcija Brezik;Redovni;
+10;Šariæ Krunoslav;Zec;Matije Gupca 26;Jasenovo Selo;+385 96 0000010;033 000 010;;;02.11.1997;LI-100370;12.06.2029;2000;Sekcija Brezik;Redovni;
+11;Mlinariæ Dominik;;Vinogradska 21;Brezik;094/0000011;;;;8.7.1957.;LI-100407;11.05.2028;2020;Sekcija Brezik;Umirovljenik;Plaæa u gotovini kod tajnika
+12;Tomiæ Damir;Medo;Šumska 76a;33410 Brezik;0930000012;;damir.tomic12@primjer.invalid;;12.06.1965;LI-100444;03.01.2029;1985;Sekcija Brezik;Redovni;
+13;Paviæ Martina;;Hrastova 41;Grabovnica;097 000 0013;;;;28.7.1971.;LI-100481;03.09.2029;1997;Sekcija Grabovnica;Redovni;
+14;Kovaèiæ Dominik;Ðuro;Lipa 24;Brezik;+385 96 0000014;;;;04.02.1959;LI-100518;25.11.2026;2016;Sekcija Brezik;Umirovljenik;
+15;Filipoviæ Tomislav;;Braæe Radiæ 88a;33411 Jasenovo Selo;098/0000015;033 000 015;tomislav.filipovic15@primjer.invalid;;7.2.1992.;LI-100555;08.01.2028;2024;Sekcija Brezik;Redovni;
+16;Periæ Željko;;Lovaèka 86;Hrastovac Gornji;0930000016;;;;22.02.1945;LI-100592;17.02.2028;1984;Sekcija Hrastovac;Umirovljenik;
+17;Horvat Marko;Ðuro;Šumska 60;Lipovo Polje;095 000 0017;;;;11.9.1987.;LI-100629;15.02.2028;2003;Sekcija Hrastovac;Umirovljenik;
+18;Babiæ Matej;Lisac;Lovaèka 23;33411 Jasenovo Selo;+385 91 0000018;;matej.babic18@primjer.invalid;;09.02.1987;LI-100666;12.10.2026;2010;Sekcija Brezik;Umirovljenik;
+19;Radiæ Mladen;;Poljska 6;Grabovnica;095/0000019;;;;2.3.1968.;LI-100703;15.10.2029;1985;Sekcija Grabovnica;Redovni;
+20;Grgiæ Vlado;Švabo;Lovaèka 36;Jasenovo Selo;0940000020;033 000 020;;;06.12.1993;LI-100740;16.04.2028;1990;Sekcija Brezik;Redovni;
+21;Vukoviæ Dominik;Brko;Šumska 13a;33410 Brezik;091 000 0021;;dominik.vukovic21@primjer.invalid;;12.1.1947.;LI-100777;16.12.2026;2003;Sekcija Brezik;Umirovljenik;
+22;Blaževiæ Željko;Ðuro;Kolodvorska 46;Jasenovo Selo;+385 94 0000022;;;;19.05.1984;LI-100814;31.08.2029;1999;Sekcija Brezik;Redovni;Plaæa u gotovini kod tajnika
+23;Novak Nikola;;Hrastova 45a;Grabovnica;095/0000023;;;;28.7.1950.;LI-100851;08.03.2029;1987;Sekcija Grabovnica;Umirovljenik;
+24;Lovriæ Mario;;Zrinska 44;33410 Brezik;0970000024;;mario.lovric24@primjer.invalid;;26.10.1979;LI-100888;30.01.2029;1980;Sekcija Brezik;Mladi;
+25;Božiæ Zoran;Zec;Trg slobode 20a;Grabovnica;094 000 0025;033 000 025;;;24.5.1953.;LI-100925;25.08.2029;1978;Sekcija Grabovnica;Umirovljenik;
+26;Klariæ Snježana;;Lovaèka 94;Lipovo Polje;+385 93 0000026;;;;17.08.1966;LI-100962;18.08.2028;2002;Sekcija Hrastovac;Umirovljenik;
+27;Lovriæ Goran;;Kolodvorska 30;33410 Brezik;091/0000027;;goran.lovric27@primjer.invalid;;17.2.1980.;LI-100999;27.05.2026;1991;Sekcija Brezik;Redovni;
+28;Èavloviæ Mladen;;Kolodvorska 87;Lipovo Polje;0950000028;;;;24.05.1979;LI-101036;10.12.2026;1996;Sekcija Hrastovac;Poèasni;
+29;Pavloviæ Ivan;Mali;Matije Gupca 105;Hrastovac Gornji;093 000 0029;;;;9.8.1978.;LI-101073;12.05.2028;2000;Sekcija Hrastovac;Umirovljenik;
+30;Mlinariæ Vlado;;Trg slobode 26;33401 Hrastovac Gornji;+385 93 0000030;033 000 030;vlado.mlinaric30@primjer.invalid;;02.09.2004;LI-101110;29.07.2029;2015;Sekcija Hrastovac;Mladi;
+31;Kneževiæ Goran;;Hrastova 82a;Hrastovac Gornji;096/0000031;;;;1.10.1997.;LI-101147;21.09.2028;1979;Sekcija Hrastovac;Redovni;
+32;Grgiæ Josip;;Lipa 88;Jasenovo Selo;0960000032;;;;18.07.1986;LI-101184;26.04.2028;2002;Sekcija Brezik;Redovni;
+33;Filipoviæ Goran;;Zrinska 15;33420 Grabovnica;092 000 0033;;goran.filipovic33@primjer.invalid;;14.8.1967.;LI-101221;24.12.2028;1981;Sekcija Grabovnica;Redovni;Plaæa u gotovini kod tajnika
+34;Paviæ Josip;;Matije Gupca 75;Brezik;+385 91 0000034;;;;28.01.2000;LI-101258;10.05.2029;1996;Sekcija Brezik;Mladi;
+35;Ðuriæ Darko;Brko;Kolodvorska 37;Hrastovac Gornji;098/0000035;033 000 035;;;25.6.1948.;LI-101295;09.12.2026;2000;Sekcija Hrastovac;Umirovljenik;
+36;Markoviæ Goran;;Trg slobode 98;33401 Hrastovac Gornji;0910000036;;goran.markovic36@primjer.invalid;;25.10.1979;LI-101332;23.10.2026;2014;Sekcija Hrastovac;Redovni;
+37;Periæ Hrvoje;;Matije Gupca 8;Lipovo Polje;093 000 0037;;;;26.4.1990.;LI-101369;25.02.2028;1996;Sekcija Hrastovac;Mladi;
+38;Kovaèiæ Tomislav;;Ribnjaèka 104;Hrastovac Gornji;+385 91 0000038;;;;14.12.1974;LI-101406;26.01.2028;1990;Sekcija Hrastovac;Redovni;
+39;Babiæ Ivana;Lisac;Matije Gupca 12;33402 Lipovo Polje;098/0000039;;ivana.babic39@primjer.invalid;;3.12.1971.;LI-101443;09.07.2029;2014;Sekcija Hrastovac;Redovni;
+40;Pavloviæ Dominik;;Hrastova 77a;Brezik;0960000040;033 000 040;;;19.12.1971;LI-101480;28.09.2029;1993;Sekcija Brezik;Poèasni;
+41;Pavloviæ Branimir;;Braæe Radiæ 45;Grabovnica;093 000 0041;;;;24.6.1996.;LI-101517;26.09.2028;2017;Sekcija Grabovnica;Redovni;
+42;Paviæ Mario;Lisac;Vinogradska 56;33402 Lipovo Polje;+385 94 0000042;;mario.pavic42@primjer.invalid;;09.02.1992;LI-101554;04.12.2026;2001;Sekcija Hrastovac;Umirovljenik;
+43;Šimunoviæ Krunoslav;Lisac;Lipa 90;Jasenovo Selo;096/0000043;;;;14.6.1996.;LI-101591;20.03.2029;2009;Sekcija Brezik;Redovni;
+44;Ðuriæ Stjepan;Lisac;Poljska 101;Hrastovac Gornji;0910000044;;;;04.02.1958;LI-101628;02.03.2029;2018;Sekcija Hrastovac;Umirovljenik;Plaæa u gotovini kod tajnika
+45;Šimunoviæ Ivan;Brko;Poljska 62;33410 Brezik;093 000 0045;033 000 045;ivan.simunovic45@primjer.invalid;;15.8.1968.;LI-101665;20.05.2026;1982;Sekcija Brezik;Mladi;
+46;Èavloviæ Damir;;Matije Gupca 44;Hrastovac Gornji;+385 94 0000046;;;;28.07.1947;LI-101702;08.06.2029;1985;Sekcija Hrastovac;Umirovljenik;
+47;Petroviæ Hrvoje;Švabo;Lipa 100a;Hrastovac Gornji;095/0000047;;;;2.11.2001.;LI-101739;16.01.2029;1996;Sekcija Hrastovac;Umirovljenik;
+48;Èavloviæ Hrvoje;Zec;Trg slobode 95;33401 Hrastovac Gornji;0920000048;;hrvoje.cavlovic48@primjer.invalid;;28.11.1977;LI-101776;28.09.2029;1977;Sekcija Hrastovac;Poèasni;
+49;Tomiæ Branimir;Medo;Lipa 106;Hrastovac Gornji;095 000 0049;;;;9.11.1954.;LI-101813;23.11.2026;1999;Sekcija Hrastovac;Umirovljenik;
+50;Novak Ante;;Matije Gupca 98;Jasenovo Selo;+385 94 0000050;033 000 050;;;16.11.1964;LI-101850;07.12.2028;1987;Sekcija Brezik;Poèasni;
+51;Juriæ Luka;Èika;Šumska 16;33402 Lipovo Polje;091/0000051;;luka.juric51@primjer.invalid;;19.6.1953.;LI-101887;06.12.2028;2011;Sekcija Hrastovac;Umirovljenik;
+52;Petroviæ Ivana;;Trg slobode 58;Jasenovo Selo;0940000052;;;;16.11.1954;LI-101924;10.11.2028;2018;Sekcija Brezik;Umirovljenik;
+53;Mariæ Hrvoje;Mali;Kolodvorska 102;Hrastovac Gornji;092 000 0053;;;;22.4.1999.;LI-101961;02.03.2028;2008;Sekcija Hrastovac;Redovni;
+54;Pavloviæ Matej;;Zrinska 45;33401 Hrastovac Gornji;+385 95 0000054;;matej.pavlovic54@primjer.invalid;;19.08.1978;LI-101998;10.06.2026;1985;Sekcija Hrastovac;Redovni;
+55;Mariæ Vlado;Brko;Lipa 104;Jasenovo Selo;097/0000055;033 000 055;;;17.4.1999.;LI-102035;31.05.2029;2009;Sekcija Brezik;Redovni;Plaæa u gotovini kod tajnika
+56;Horvat Stjepan;Brko;Ribnjaèka 93;Grabovnica;0960000056;;;;26.09.1969;LI-102072;06.12.2026;2008;Sekcija Grabovnica;Redovni;
+57;Tomiæ Ante;;Ribnjaèka 58;33410 Brezik;096 000 0057;;ante.tomic57@primjer.invalid;;27.12.1965.;LI-102109;11.06.2028;1999;Sekcija Brezik;Redovni;
+58;Mlinariæ Darko;;Ribnjaèka 28;Jasenovo Selo;+385 97 0000058;;;;04.07.1988;LI-102146;21.09.2029;2011;Sekcija Brezik;Umirovljenik;
+59;Lovriæ Željko;Mali;Zrinska 63;Hrastovac Gornji;094/0000059;;;;4.6.1946.;LI-102183;13.09.2029;1994;Sekcija Hrastovac;Umirovljenik;
+60;Petroviæ Tomislav;;Lipa 6;33420 Grabovnica;0970000060;033 000 060;tomislav.petrovic60@primjer.invalid;;01.01.2000;LI-102220;07.01.2028;2010;Sekcija Grabovnica;Redovni;
+61;Horvat Ivan;;Lovaèka 5;Brezik;091 000 9999;;;;1.1.1970.;;;2001;Sekcija Brezik;Redovni;DUPLIKAT imena (provjera)
+62;;;Šumska 1;Brezik;;;;;;;;;;;BEZ IMENA (ne smije se uvesti)
+63;Testiæ Pero;;Lipa 3;Grabovnica;098 000 0063;;;12345;32.13.1980;;;;Sekcija Grabovnica;Redovni;KRIVI OIB i datum (upozorenje)
+64;Novakoviæka;;;Brezik;;;;;;;;;Sekcija Brezik;Mladi;SAMO JEDNA RIJEÈ (upozorenje)
